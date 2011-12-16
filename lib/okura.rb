@@ -9,9 +9,11 @@ end
 module Okura
   class Tagger
     todo
-    def initialize
-      @dic=todo
+    def initialize dic,mat
+      @dic,@mat=dic,mat
     end
+    attr_reader :dic
+    attr_reader :mat
     # -> [String]
     def wakati str
       mincost_path=parse(str).mincost_path
@@ -23,10 +25,10 @@ module Okura
       chars=str.split(//)
       nodes=Nodes.new(chars.length+2)
       nodes.add(0,Node.mk_bos)
-      nodes.add(chars.length,Node.mk_eos)
+      nodes.add(chars.length+1,Node.mk_eos)
       str.length.times{|i|
         @dic.possible_words(str,i).each{|w|
-          nodes.add(i,w)
+          nodes.add(i+1,Node.new(w))
         }
       }
       nodes
@@ -34,12 +36,8 @@ module Okura
   end
   class Nodes
     def initialize len
-      @bos=todo # total_cost=0
-      @eos=todo # total_cost=nil
-    end
-    todo
-    def last
-      self[-1]
+      @begins=(0...len).map{[]}
+      @ends=(0...len).map{[]}
     end
     def [](i)
       @begins[i]
@@ -48,22 +46,29 @@ module Okura
     def mincost_path
       todo
     end
-    def add i,word
-      todo
+    def add i,node
+      @begins[i].push node
     end
   end
   class Node
+    def initialize word
+      @word=word
+      @nearest_prev=nil
+      @total_cost=nil
+    end
     attr_reader :word
     attr_accessor :nearest_prev
     attr_accessor :total_cost
-    def mk_eos
-      todo
+    def to_s
+      "Node(#{word},#{total_cost})"
     end
-    def mk_bos
-      todo
+    def self.mk_bos
+      node=Node.new Word.new('BOS',0,0,0)
+      node.total_cost=0
+      node
     end
-    def mk_node word
-      todo
+    def self.mk_eos
+      Node.new Word.new('EOS',0,0,0)
     end
   end
   class Word
@@ -75,7 +80,8 @@ module Okura
     attr_reader :rid
     attr_reader :cost
     def == other
-      return [surface,lid,rid] == [other.surface,other.lid,other.rid]
+      return [surface,lid,rid,cost] ==
+        [other.surface,other.lid,other.rid,other.cost]
     end
     def to_s
       "Word(#{surface},#{lid},#{rid},#{cost})"
@@ -204,8 +210,11 @@ module Okura
       @mat=mat
     end
     # Feature -> Feature -> Int
-    def cost f1,f2
-      @mat[f1.id][f2.id]
+    def cost rid,lid
+      @mat[rid][lid]
+    end
+    def set(rid,lid,cost)
+      @mat[rid][lid]=cost
     end
     def rsize
       @mat.size

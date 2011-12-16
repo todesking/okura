@@ -5,17 +5,6 @@ require File.join(File.dirname(__FILE__),'..','lib','okura')
 def as_io str
   StringIO.new str
 end
-def feature id
-  Okura::Feature.new id,''
-end
-
-describe 'helpers' do
-  describe 'feature()' do
-    it 'Featureを作れる' do
-      feature(0).id.should == 0
-    end
-  end
-end
 
 describe Okura::Matrix do
   describe '.load_from_io' do
@@ -34,7 +23,7 @@ describe Okura::Matrix do
       # TODO: エラー処理とかその他のパターン
     end
     describe '#cost' do
-      it '渡された二つのFeatureを元にコストを返せる' do
+      it '渡された二つのFeature idを元にコストを返せる' do
         m=Okura::Matrix.load_from_io as_io(<<-EOS)
 2 2
 0 0 0
@@ -42,7 +31,7 @@ describe Okura::Matrix do
 1 0 2
 1 1 3
         EOS
-        m.cost(feature(1),feature(1)).should == 3
+        m.cost(1,1).should == 3
       end
     end
   end
@@ -92,6 +81,35 @@ describe Okura::Features do
       fs.size.should == 5
       fs.from_id(0).id.should == 0
       fs.from_id(0).text.should == 'BOS/EOS,*,*,*,*,*,BOS/EOS'
+    end
+  end
+end
+
+describe Okura::Tagger do
+  def w *args
+    Okura::Word.new *args
+  end
+  def f *args
+    Okura::Feature.new *args
+  end
+  describe '#parse' do
+    it '文字列を解析してNodesを返せる' do
+      dic=Okura::WordDic.new
+      dic.define w('a',1,1,0)
+      dic.define w('aa',1,1,10)
+      dic.define w('b',2,2,3)
+      mat=Okura::Matrix.new (0...3).map{[nil]*3}
+      mat.set(1,1,11)
+      mat.set(1,2,12)
+      mat.set(2,1,21)
+      tagger=Okura::Tagger.new dic,mat
+
+      nodes=tagger.parse('aab')
+
+      nodes[0][0].word.should == w('BOS',0,0,0)
+      nodes[4][0].word.should == w('EOS',0,0,0)
+      nodes[1].size.should == 2
+      nodes[3][0].word.should == w('b',2,2,3)
     end
   end
 end

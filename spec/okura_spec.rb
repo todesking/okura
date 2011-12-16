@@ -5,13 +5,16 @@ require File.join(File.dirname(__FILE__),'..','lib','okura')
 def as_io str
   StringIO.new str
 end
-def feature lid,rid
-  Okura::Feature.new lid,rid,''
+def feature id
+  Okura::Feature.new id,''
 end
 
 describe 'helpers' do
-  it { feature(0,1).right_id.should == 1 }
-  it { feature(0,1).left_id.should == 0 }
+  describe 'feature()' do
+    it 'Featureを作れる' do
+      feature(0).id.should == 0
+    end
+  end
 end
 
 describe Okura::Matrix do
@@ -39,7 +42,7 @@ describe Okura::Matrix do
 1 0 2
 1 1 3
         EOS
-        m.cost(feature(0,1),feature(1,0)).should == 3
+        m.cost(feature(1),feature(1)).should == 3
       end
     end
   end
@@ -54,5 +57,24 @@ describe Okura::WordDic do
       EOS
       wd.size.should == 2
     end
+  end
+
+  def w surface
+    Okura::Word.new surface,1,1,1
+  end
+
+  describe '#possible_words' do
+    it '文字列と位置から､辞書に登録された単語を返せる' do
+      wd=Okura::WordDic.new
+      wd.define w('aaa')
+      wd.define w('bbb')
+      wd.define w('aa')
+
+      wd.possible_words('bbbaaa',0).should == [w('bbb')]
+      wd.possible_words('bbbaaa',1).should == []
+      wd.possible_words('bbbaaa',3).should == [w('aa'),w('aaa')]
+    end
+  end
+  describe '#define' do
   end
 end

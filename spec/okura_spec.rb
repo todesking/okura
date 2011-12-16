@@ -5,6 +5,15 @@ require File.join(File.dirname(__FILE__),'..','lib','okura')
 def as_io str
   StringIO.new str
 end
+def w *args
+  Okura::Word.new *args
+end
+def f *args
+  Okura::Feature.new *args
+end
+def n *args
+  Okura::Node.new *args
+end
 
 describe Okura::Matrix do
   describe '.load_from_io' do
@@ -86,12 +95,6 @@ describe Okura::Features do
 end
 
 describe Okura::Tagger do
-  def w *args
-    Okura::Word.new *args
-  end
-  def f *args
-    Okura::Feature.new *args
-  end
   describe '#parse' do
     it '文字列を解析してNodesを返せる' do
       dic=Okura::WordDic.new
@@ -110,6 +113,27 @@ describe Okura::Tagger do
       nodes[4][0].word.should == w('EOS',0,0,0)
       nodes[1].size.should == 2
       nodes[3][0].word.should == w('b',2,2,3)
+    end
+  end
+end
+
+describe Okura::Nodes do
+  describe '#mincost_path' do
+    it '最小コストのパスを返せる' do
+      mat=Okura::Matrix.new (0...2).map{[nil]*2}
+      mat.set(0,1,10)
+      mat.set(1,0,10)
+      nodes=Okura::Nodes.new 3
+      nodes.add(0,Okura::Node.mk_bos)
+      nodes.add(1,n(w('a',1,1,10)))
+      nodes.add(1,n(w('b',1,1,0)))
+      nodes.add(2,Okura::Node.mk_eos)
+
+      mcp=nodes.mincost_path mat
+      mcp.length.should == 3
+      mcp[0].word.surface.should == 'BOS'
+      mcp[1].word.surface.should == 'a'
+      mcp[2].word.surface.should == 'EOS'
     end
   end
 end

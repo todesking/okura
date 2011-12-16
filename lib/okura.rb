@@ -42,9 +42,43 @@ module Okura
     def [](i)
       @begins[i]
     end
-    # -> [Node] | nil
-    def mincost_path
-      todo
+    def length
+      @begins.length
+    end
+    # Matrix -> [Node] | nil
+    def mincost_path mat
+      return [] if length==0
+      # calc cost
+      self[0].each{|n|
+        n.total_cost=n.word.cost
+        n.nearest_prev=nil
+      }
+      (1...length).each{|i|
+        prevs=self[i-1]
+        curs=self[i]
+        prevs.each{|prev|
+          curs.each{|cur|
+            join_cost=mat.cost(prev.word.rid,cur.word.lid)
+            next if join_cost.nil?
+            cost=join_cost+cur.word.cost
+            if !cur.total_cost || cost < cur.total_cost
+              cur.total_cost=cost
+              cur.nearest_prev=prev
+            end
+          }
+        }
+      }
+      # calc mincost path
+      ret=[]
+      cur=self[-1][0]
+      until cur.nil?
+        ret.push cur
+        cur=cur.nearest_prev
+      end
+      # disconnected
+      return nil unless ret.length == self.length
+      # success
+      return ret.reverse
     end
     def add i,node
       @begins[i].push node

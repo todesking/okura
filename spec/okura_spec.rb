@@ -78,3 +78,20 @@ describe Okura::WordDic do
   describe '#define' do
   end
 end
+
+describe Okura::Features do
+  describe '.load_from_io' do
+    it 'インスタンスを構築できる' do
+      fs=Okura::Features.load_from_io(<<-EOS)
+0 BOS/EOS,*,*,*,*,*,BOS/EOS
+1 その他,間投,*,*,*,*,*
+2 フィラー,*,*,*,*,*,*
+3 感動詞,*,*,*,*,*,*
+4 記号,アルファベット,*,*,*,*,*
+      EOS
+      fs.size.should == 5
+      fs.from_id(0).id.should == 0
+      fs.from_id(0).text.should == 'BOS/EOS,*,*,*,*,*,BOS/EOS'
+    end
+  end
+end

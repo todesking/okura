@@ -92,6 +92,27 @@ module Okura
     end
   end
   class Features
+    def initialize
+      @map_id={}
+    end
+    def from_id id
+      @map_id[id]
+    end
+    def add feature
+      @map_id[feature.id]=feature
+    end
+    def size
+      @map_id.size
+    end
+    def self.load_from_io io
+      fs=Features.new
+      io.each_line{|line|
+        id_s,name=line.strip.split(/ /,2)
+        id=id_s.to_i
+        fs.add Feature.new(id,name)
+      }
+      fs
+    end
   end
   class Trie
     # -> Enumerable<Word>

@@ -151,7 +151,7 @@ describe Okura::Nodes do
       mcp=nodes.mincost_path mat
       mcp.length.should == 3
       mcp[0].word.surface.should == 'BOS'
-      mcp[1].word.surface.should == 'a'
+      mcp[1].word.surface.should == 'b'
       mcp[2].word.surface.should == 'EOS'
     end
     it '単語長が1を超えても動く' do

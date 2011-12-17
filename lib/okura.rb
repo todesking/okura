@@ -182,7 +182,7 @@ module Okura
         if i==word.surface.length
           @leafs.push word
         else
-          fst=word.surface[0]
+          fst=word.surface[i]
           node=@nodes[fst]
           @nodes[fst]=node=TrieNode.new if node.nil?
           node.add word,i+1

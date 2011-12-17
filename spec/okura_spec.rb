@@ -72,6 +72,12 @@ describe Okura::WordDic do
       wd.possible_words('bbbaaa',1).should == []
       wd.possible_words('bbbaaa',3).should == [w('aa'),w('aaa')]
     end
+    it '複雑な単語にも対応している' do
+      wd=Okura::WordDic.new
+      wd.define w('ニワトリ')
+
+      wd.possible_words('ニワトリ',0).should == [w('ニワトリ')]
+    end
   end
   describe '#define' do
   end

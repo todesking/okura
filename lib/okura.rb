@@ -58,7 +58,7 @@ module Okura
           curs.each{|cur|
             join_cost=mat.cost(prev.word.rid,cur.word.lid)
             next if join_cost.nil?
-            cost=join_cost+cur.word.cost
+            cost=prev.total_cost+join_cost+cur.word.cost
             if !cur.total_cost || cost < cur.total_cost
               cur.total_cost=cost
               cur.nearest_prev=prev

@@ -55,6 +55,8 @@ module Okura
         prevs=@ends[i-1]
         curs=@begins[i]
         prevs.each{|prev|
+          # 途中で行き止まりのNodeはtotal_costが設定されない
+          next if prev.total_cost.nil?
           curs.each{|cur|
             join_cost=mat.cost(prev.word.rid,cur.word.lid)
             next if join_cost.nil?

@@ -13,8 +13,8 @@ module Okura
     end
     attr_reader :dic
     # -> [String]
-    def wakati str
-      mincost_path=parse(str).mincost_path
+    def wakati str,mat
+      mincost_path=parse(str).mincost_path mat
       return nil if mincost_path.nil?
       return mincost_path.map{|node|node.word.surface}
     end

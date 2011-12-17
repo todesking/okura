@@ -101,11 +101,7 @@ describe Okura::Tagger do
       dic.define w('a',1,1,0)
       dic.define w('aa',1,1,10)
       dic.define w('b',2,2,3)
-      mat=Okura::Matrix.new (0...3).map{[nil]*3}
-      mat.set(1,1,11)
-      mat.set(1,2,12)
-      mat.set(2,1,21)
-      tagger=Okura::Tagger.new dic,mat
+      tagger=Okura::Tagger.new dic
 
       nodes=tagger.parse('aab')
 
@@ -113,6 +109,23 @@ describe Okura::Tagger do
       nodes[4][0].word.should == w('EOS',0,0,0)
       nodes[1].size.should == 2
       nodes[3][0].word.should == w('b',2,2,3)
+    end
+  end
+end
+
+describe Okura::Node do
+  describe '#make_eos' do
+    describe '#length' do
+      it 'returns 1' do
+        Okura::Node.mk_eos.length.should == 1
+      end
+    end
+  end
+  describe '#make_bos' do
+    describe '#length' do
+      it 'returns 1' do
+        Okura::Node.mk_bos.length.should == 1
+      end
     end
   end
 end
@@ -133,6 +146,24 @@ describe Okura::Nodes do
       mcp.length.should == 3
       mcp[0].word.surface.should == 'BOS'
       mcp[1].word.surface.should == 'a'
+      mcp[2].word.surface.should == 'EOS'
+    end
+    it '単語長が1を超えても動く' do
+      mat=Okura::Matrix.new (0...2).map{[nil]*2}
+      mat.set(0,1,10)
+      mat.set(1,0,10)
+      mat.set(1,1,10)
+      nodes=Okura::Nodes.new 4
+      nodes.add(0,Okura::Node.mk_bos)
+      nodes.add(1,n(w('a',1,1,10)))
+      nodes.add(1,n(w('bb',1,1,0)))
+      nodes.add(2,n(w('a',1,1,10)))
+      nodes.add(3,Okura::Node.mk_eos)
+
+      mcp=nodes.mincost_path mat
+      mcp.length.should == 3
+      mcp[0].word.surface.should == 'BOS'
+      mcp[1].word.surface.should == 'bb'
       mcp[2].word.surface.should == 'EOS'
     end
   end

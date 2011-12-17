@@ -8,12 +8,10 @@ end
 
 module Okura
   class Tagger
-    todo
-    def initialize dic,mat
-      @dic,@mat=dic,mat
+    def initialize dic
+      @dic=dic
     end
     attr_reader :dic
-    attr_reader :mat
     # -> [String]
     def wakati str
       mincost_path=parse(str).mincost_path
@@ -54,8 +52,8 @@ module Okura
         n.nearest_prev=nil
       }
       (1...length).each{|i|
-        prevs=self[i-1]
-        curs=self[i]
+        prevs=@ends[i-1]
+        curs=@begins[i]
         prevs.each{|prev|
           curs.each{|cur|
             join_cost=mat.cost(prev.word.rid,cur.word.lid)
@@ -75,13 +73,14 @@ module Okura
         ret.push cur
         cur=cur.nearest_prev
       end
-      # disconnected
-      return nil unless ret.length == self.length
+      # TODO: disconnected
+      #  return nil unless ...
       # success
       return ret.reverse
     end
     def add i,node
       @begins[i].push node
+      @ends[i+node.length-1].push node
     end
   end
   class Node
@@ -93,16 +92,22 @@ module Okura
     attr_reader :word
     attr_accessor :nearest_prev
     attr_accessor :total_cost
+    def length
+      word.surface.length
+    end
     def to_s
       "Node(#{word},#{total_cost})"
     end
     def self.mk_bos
       node=Node.new Word.new('BOS',0,0,0)
       node.total_cost=0
+      def node.length; 1; end
       node
     end
     def self.mk_eos
-      Node.new Word.new('EOS',0,0,0)
+      node=Node.new Word.new('EOS',0,0,0)
+      def node.length; 1; end
+      node
     end
   end
   class Word
@@ -152,22 +157,6 @@ module Okura
         fs.add Feature.new(id,name)
       }
       fs
-    end
-  end
-  class Trie
-    # -> Enumerable<Word>
-    def lookup str,i
-      todo
-    end
-    class Builder
-      # Word -> ()
-      def add word
-        todo
-      end
-      # () -> Trie
-      def build
-        todo
-      end
     end
   end
   def CompositeDic
@@ -220,8 +209,8 @@ module Okura
     # IO -> WordDic
     def self.load_from_io io
       wd=WordDic.new
-      CSV.instance(io).each {|row|
-        surface,lid_s,rid_s,cost_s,*rest=row
+      io.each_line {|line|
+        surface,lid_s,rid_s,cost_s,*rest=line.split(/,/,5)
         lid,rid,cost=[lid_s,rid_s,cost_s].map(&:to_i)
         wd.define Word.new(surface,lid,rid,cost)
       }

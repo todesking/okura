@@ -31,17 +31,17 @@ describe Okura::Matrix do
       end
       # TODO: エラー処理とかその他のパターン
     end
-    describe '#cost' do
-      it '渡された二つのFeature idを元にコストを返せる' do
-        m=Okura::Matrix.load_from_io as_io(<<-EOS)
+  end
+  describe '#cost' do
+    it '渡された二つのFeature idを元にコストを返せる' do
+      m=Okura::Matrix.load_from_io as_io(<<-EOS)
 2 2
 0 0 0
 0 1 1
 1 0 2
 1 1 3
-        EOS
-        m.cost(1,1).should == 3
-      end
+      EOS
+      m.cost(1,1).should == 3
     end
   end
 end

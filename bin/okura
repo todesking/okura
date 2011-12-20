@@ -1,0 +1,7 @@
+#!/bin/env ruby
+# -*- filetype:ruby -*-
+
+require 'rubygems'
+require 'okura/console'
+
+Okura::Console.new.run_console $*

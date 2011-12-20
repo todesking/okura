@@ -1,5 +1,7 @@
-# TODO: requireにすると読めない
-load File.join(File.dirname(__FILE__),'okura.rb')
+# -*- coding: utf-8 -*-
+$LOAD_PATH.unshift '.'
+require 'okura'
+
 dict_dir=$*[0]
 
 puts 'loading words'

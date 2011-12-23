@@ -163,8 +163,45 @@ Z,9,9,5244,記号,空白,*,*,*,*,*
 	  unk.possible_words('AZ',0).should == [w('A',5,5,3274)]
 	end
   end
-  # TODO: possible_wordsにおける､CharTypeの違いによる未知語抽出処理の変化
-  # TODO: possible_wordsにおける､UTF8以外の文字列の扱い
+
+  describe '#possible_words: 文字コードによる挙動' do
+	describe 'UTF8文字列が来たとき' do
+	  it '正しく解析できる'
+	end
+	describe 'UTF8じゃない文字列が来たとき' do
+	  it '正しく解析できる'
+	end
+  end
+  describe '#possible_words: 先頭文字のカテゴリによる挙動' do
+	describe 'invoke=0のとき' do
+	  describe '辞書に単語がある場合' do
+		it 'も､未知語を抽出する'
+	  end
+	end
+	describe 'invoke=1のとき' do
+	  describe '辞書に単語がある場合' do
+		it '未知語を抽出しない'
+	  end
+	  describe '辞書に単語がない場合' do
+		describe 'group=0のとき' do
+		  describe 'length=0のとき' do
+			it '未知語を抽出しない'
+		  end
+		  describe 'length=2のとき' do
+			it '2文字までの同種文字列を未知語とする'
+		  end
+		end
+		describe 'group=1のとき' do
+		  describe 'length=0のとき' do
+			it '同種の文字列を長さ制限なしでまとめて未知語とする'
+		  end
+		  describe 'length=2のとき' do
+			it 'length=0の結果に加え､2文字までの同種文字列を未知語とする'
+		  end
+		end
+	  end
+	end
+  end
 end
 
 describe Okura::Tagger do

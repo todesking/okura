@@ -233,16 +233,19 @@ module Okura
   class CharTypes
     def initialize
       @types={}
-      @mappings={}
+      @mapping={}
+      @compat_mapping={}
     end
     def type_for charcode
-      @mappings[charcode]||@types['DEFAULT']
+      @mapping[charcode]||@types['DEFAULT']
     end
     def define_type name,invoke,group,length
       @types[name]=CharType.new(name,invoke,group,length)
     end
-    def define_map c,type
-      @mappings[c]=type
+    def define_map charcode,type,compat_types
+      @mapping[charcode]=type
+      type.add charcode
+      compat_types.each{|ct|ct.add charcode}
     end
     def named name
       @types[name]
@@ -256,14 +259,15 @@ module Okura
         case cols[0]
         when /^0x(\d{4})(?:\.\.0x(\d{4}))?$/
           # mapping
-          parse_error line unless cols.size == 2
+          parse_error line unless cols.size >= 2
           type=cts.named cols[1]
+          compat_types=cols[2..-1].map{|name|cts.named name}
           if $2
             ($1.to_i(16)..$2.to_i(16)).each{|c|
-              cts.define_map(c,type)
+              cts.define_map(c,type,compat_types)
             }
           else
-            cts.define_map($1.to_i(16),type)
+            cts.define_map($1.to_i(16),type,compat_types)
           end
         when /^\w+$/
           parse_error line unless cols.size == 4
@@ -284,11 +288,18 @@ module Okura
   class CharType
     def initialize name,invoke,group,length
       @name,@invoke,@group,@length=name,invoke,group,length
+      @accept_charcodes={}
+    end
+    def add charcode
+      @accept_charcodes[charcode]=true
     end
     attr_reader :name
     attr_reader :length
     def group?; @group; end
     def invoke?; @invoke; end
+    def accept? charcode
+      @accept_charcodes[charcode]
+    end
   end
   class Matrix
     def initialize mat

@@ -114,6 +114,7 @@ TYPE3 0 1 3
 0x0021 TYPE1
 0x0022 TYPE2 # comment
 0x0023..0x0040 TYPE3
+0x0099 TYPE1 TYPE2 # 互換カテゴリ
 	  EOS
 
 	  cts.type_for(0x21).name.should == 'TYPE1'
@@ -121,17 +122,26 @@ TYPE3 0 1 3
 	  cts.type_for(0x23).name.should == 'TYPE3'
 	  cts.type_for(0x40).name.should == 'TYPE3'
 	  cts.type_for(0x41).name.should == 'DEFAULT'
+	  cts.type_for(0x99).name.should == 'TYPE1'
 
-	  cts.named('TYPE1').name.should == 'TYPE1'
+	  t1,t2,t3=cts.named('TYPE1'), cts.named('TYPE2'), cts.named('TYPE3')
 
-	  cts.named('TYPE1').invoke?.should be_true
-	  cts.named('TYPE2').invoke?.should be_false
+	  t1.name.should == 'TYPE1'
 
-	  cts.named('TYPE1').group?.should be_false
-	  cts.named('TYPE2').group?.should be_true
+	  t1.invoke?.should be_true
+	  t2.invoke?.should be_false
 
-	  cts.named('TYPE2').length.should == 0
-	  cts.named('TYPE3').length.should == 3
+	  t1.group?.should be_false
+	  t2.group?.should be_true
+
+	  t2.length.should == 0
+	  t3.length.should == 3
+
+	  t1.should be_accept(0x21)
+	  t1.should_not be_accept(0x22)
+	  t2.should be_accept(0x22)
+
+	  t1.should be_accept(0x99)
 	end
   end
 end

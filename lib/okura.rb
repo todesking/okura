@@ -226,21 +226,26 @@ module Okura
       @templates={}
     end
     # -> [Word]
-    def possible_words str,i
+    def possible_words str,i,found_in_normal_dic
       ret=[]
       first_char_type=@char_types.type_for str[i].ord
-      collect_result ret,first_char_type,str[i..i]
-      x=i+1
+      return [] if found_in_normal_dic && !first_char_type.invoke?
+
+      collect_result ret,first_char_type,str[i..i] if first_char_type.length > 0
+
+      l=1
       str[(i+1)..-1].each_codepoint{|cp|
         break unless first_char_type.accept? cp
-        x+=1
-        collect_result ret,first_char_type,str[i...x]
+        l+=1
+        collect_result ret,first_char_type,str[i...(i+l)] if first_char_type.length >= l
       }
+      collect_result ret,first_char_type,str[i...(i+l)] if first_char_type.group? && first_char_type.length < l
+
       ret
     end
     private
     def collect_result ret,type,surface
-      @templates[type.name].each{|tp|
+      (@templates[type.name]||[]).each{|tp|
         ret.push Word.new surface,tp.lid,tp.rid,tp.cost
       }
     end
@@ -267,7 +272,9 @@ module Okura
       @compat_mapping={}
     end
     def type_for charcode
-      @mapping[charcode]||@types['DEFAULT']
+      @mapping[charcode]||default_type||
+        (raise "Char type for 0x#{charcode.to_s(16)} is not defined,"+
+         " and DEFAULT type is not defined too")
     end
     def define_type name,invoke,group,length
       @types[name]=CharType.new(name,invoke,group,length)
@@ -279,6 +286,9 @@ module Okura
     end
     def named name
       @types[name]
+    end
+    def default_type
+      named 'DEFAULT'
     end
     def self.load_from_io io
       cts=CharTypes.new

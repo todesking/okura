@@ -144,14 +144,49 @@ TYPE3 0 1 3
 	  t1.should be_accept(0x99)
 	end
   end
+  describe '#type_for' do
+	describe '文字に対するCharTypeが定義されていない場合' do
+	  describe '文字種DEFAULTが定義されている場合' do
+		subject {
+		  cts=Okura::CharTypes.new
+		  cts.define_type 'DEFAULT',false,false,0
+		  cts
+		}
+		it 'CharType#default_typeが返る' do
+		  subject.type_for('a'.ord).name.should == subject.default_type.name
+		end
+	  end
+	  describe '文字種DEFAULTが定義されてない場合' do
+		subject { cts=Okura::CharTypes.new }
+		it 'エラーになる' do
+		  expect { subject.type_for('a'.ord) }.to raise_error
+		end
+	  end
+	end
+  end
+  describe '#define_map' do
+	describe '互換カテゴリが指定された場合' do
+	  subject {
+		cts=Okura::CharTypes.new
+		cts.define_type 'A',true,true,10
+		cts.define_type 'B',true,true,10
+		cts.define_map 1,cts.named('A'),[cts.named('B')]
+		cts
+	  }
+	  it '互換カテゴリが正しく認識される' do
+		subject.named('A').accept?(1).should be_true
+		subject.named('B').accept?(1).should be_true
+	  end
+	end
+  end
 end
 
 describe Okura::UnkDic do
   describe '.load_from_io' do
 	it 'インスタンスを構築できる' do
 	  cts=Okura::CharTypes.new
-	  cts.define_type 'A',true,true,0
-	  cts.define_type 'Z',true,true,0
+	  cts.define_type 'A',true,true,10
+	  cts.define_type 'Z',true,true,10
 	  cts.define_map 'A'.ord, cts.named('A'), []
 	  cts.define_map 'Z'.ord, cts.named('Z'), []
 
@@ -160,43 +195,151 @@ A,5,5,3274,記号,一般,*,*,*,*,*
 Z,9,9,5244,記号,空白,*,*,*,*,*
 	  EOS
 
-	  unk.possible_words('AZ',0).should == [w('A',5,5,3274)]
+	  unk.possible_words('AZ',0,false).should == [w('A',5,5,3274)]
 	end
   end
 
-  describe '#possible_words: 文字コードによる挙動' do
-	describe 'UTF8文字列が来たとき' do
-	  it '正しく解析できる'
+  describe '#possible_words' do
+	describe '互換カテゴリ' do
+	  subject {
+		cts=Okura::CharTypes.new
+		cts.define_type 'KATAKANA',false,true,0
+		cts.define_type 'HIRAGANA',false,true,0
+		cts.define_map 'ア'.ord,cts.named('KATAKANA'),[]
+		cts.define_map 'ー'.ord,cts.named('HIRAGANA'),[cts.named('KATAKANA')]
+		ud=Okura::UnkDic.new cts
+		ud.define 'KATAKANA',10,20,1000
+		ud.define 'HIRAGANA',1,2,1000
+		ud
+	  }
+	  it '互換カテゴリを正しく解釈する' do
+		subject.possible_words('アーー',0,false).should == [w('アーー',10,20,1000)]
+	  end
 	end
-	describe 'UTF8じゃない文字列が来たとき' do
-	  it '正しく解析できる'
+	describe '未知語定義' do
+	  describe '同一文字種に複数の未知語定義があった場合' do
+		subject do
+		  cts=Okura::CharTypes.new
+		  cts.define_type 'A',true,true,0
+		  cts.define_map 'A'.ord,cts.named('A'),[]
+		  ud=Okura::UnkDic.new cts
+		  ud.define 'A',10,20,1000
+		  ud.define 'A',11,21,1111
+		  ud
+		end
+		it 'すべての定義から未知語を抽出する' do
+		  subject.possible_words('A',0,false).should == [
+			w('A',10,20,1000),
+			w('A',11,21,1111)
+		  ]
+		end
+	  end
 	end
   end
-  describe '#possible_words: 先頭文字のカテゴリによる挙動' do
+  describe '#possible_words: 文字コードによる挙動:' do
+	subject do
+	  cts=Okura::CharTypes.new
+	  cts.define_type 'A',true,true,0
+	  cts.define_map 'あ'.ord,cts.named('A'),[]
+	  ud=Okura::UnkDic.new cts
+	  ud.define 'A',10,20,1000
+	  ud
+	end
+	describe 'UTF8文字列が来たとき' do
+	  it '正しく解析できる' do
+		subject.possible_words('あいう'.encode('UTF-8'),0,false).map(&:surface).should == %w(あ)
+	  end
+	end
+	describe 'UTF8じゃない文字列が来たとき' do
+	  it 'エラーになる' do
+		expect { subject.possible_words('あいう'.encode('SHIFT_JIS'),0,false) }.to raise_error
+	  end
+	end
+  end
+  describe '#possible_words: 先頭文字のカテゴリによる挙動:' do
+	def create_chartypes typename_under_test
+	  cts=Okura::CharTypes.new
+	  cts.define_type 'T000',false,false,0
+	  cts.define_type 'T012',false,true,2
+	  cts.define_type 'T100',true,false,0
+	  cts.define_type 'T102',true,false,2
+	  cts.define_type 'T110',true,true,0
+	  cts.define_type 'T112',true,true,2
+	  cts.define_type 'ZZZZ',true,true,2
+
+	  cts.define_map 'A'.ord,cts.named(typename_under_test),[]
+	  cts.define_map 'Z'.ord,cts.named('ZZZZ'),[]
+
+	  cts
+	end
+	def create_subject typename_under_test
+	  udic=Okura::UnkDic.new create_chartypes(typename_under_test)
+	  udic.define typename_under_test,10,20,1000
+	  udic
+	end
 	describe 'invoke=0のとき' do
+	  subject { create_subject 'T012' }
 	  describe '辞書に単語がある場合' do
-		it 'も､未知語を抽出する'
+		it '未知語を抽出しない' do
+		  subject.possible_words('AAA',0,true).should be_empty
+		end
 	  end
 	end
 	describe 'invoke=1のとき' do
 	  describe '辞書に単語がある場合' do
-		it '未知語を抽出しない'
+		subject { create_subject 'T102' }
+		it 'も､未知語を抽出する' do
+		  subject.possible_words('AAAZ',0,true).should_not be_empty
+		end
+	  end
+	  describe '先頭文字のカテゴリに対応する未知語定義がなかった場合' do
+		subject { create_subject 'T112' }
+		it '未知語を抽出しない' do
+		  subject.possible_words('ZZ',0,false).should be_empty
+		end
 	  end
 	  describe '辞書に単語がない場合' do
 		describe 'group=0のとき' do
 		  describe 'length=0のとき' do
-			it '未知語を抽出しない'
+			subject { create_subject 'T100' }
+			it '未知語を抽出しない' do
+			  subject.possible_words('AAAZ',0,false).should be_empty
+			end
 		  end
 		  describe 'length=2のとき' do
-			it '2文字までの同種文字列を未知語とする'
+			subject { create_subject 'T102' }
+			it '2文字までの同種文字列を未知語とする' do
+			  subject.possible_words('AAAZ',0,false).map(&:surface).should == %w(A AA)
+			end
 		  end
 		end
 		describe 'group=1のとき' do
 		  describe 'length=0のとき' do
-			it '同種の文字列を長さ制限なしでまとめて未知語とする'
+			subject { create_subject 'T110' }
+			it '同種の文字列を長さ制限なしでまとめて未知語とする' do
+			  subject.possible_words('AAAAAZ',0,false).map(&:surface).should == %w(AAAAA)
+			end
+			it '連続が一文字の場合も未知語として取れる' do
+			  subject.possible_words('AZZZ',0,false).map(&:surface).should == %w(A)
+			end
+			it '1文字しかなくても正しく扱える' do
+			  subject.possible_words('A',0,false).map(&:surface).should == %w(A)
+			end
 		  end
 		  describe 'length=2のとき' do
-			it 'length=0の結果に加え､2文字までの同種文字列を未知語とする'
+			subject { create_subject 'T112' }
+			it 'length=0の結果に加え､2文字までの同種文字列を未知語とする' do
+			  subject.possible_words('AAAAAZ',0,false).map(&:surface).should == %w(A AA AAAAA)
+			end
+			it '1文字しかなくても正しく扱える' do
+			  subject.possible_words('A',0,false).map(&:surface).should == %w(A)
+			end
+			it '2文字しかなくても正しく扱える' do
+			  subject.possible_words('AA',0,false).map(&:surface).should == %w(A AA)
+			end
+			it '3文字しかなくても正しく扱える' do
+			  subject.possible_words('AAA',0,false).map(&:surface).should == %w(A AA AAA)
+			end
 		  end
 		end
 	  end

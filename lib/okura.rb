@@ -230,6 +230,66 @@ module Okura
       todo
     end
   end
+  class CharTypes
+    def initialize
+      @types={}
+      @mappings={}
+    end
+    def type_for charcode
+      @mappings[charcode]||@types['DEFAULT']
+    end
+    def define_type name,invoke,group,length
+      @types[name]=CharType.new(name,invoke,group,length)
+    end
+    def define_map c,type
+      @mappings[c]=type
+    end
+    def named name
+      @types[name]
+    end
+    def self.load_from_io io
+      cts=CharTypes.new
+      io.each_line{|line|
+        cols=line.gsub(/\s*#.*$/,'').split(/\s/)
+        next if cols.empty?
+
+        case cols[0]
+        when /^0x(\d{4})(?:\.\.0x(\d{4}))?$/
+          # mapping
+          parse_error line unless cols.size == 2
+          type=cts.named cols[1]
+          if $2
+            ($1.to_i(16)..$2.to_i(16)).each{|c|
+              cts.define_map(c,type)
+            }
+          else
+            cts.define_map($1.to_i(16),type)
+          end
+        when /^\w+$/
+          parse_error line unless cols.size == 4
+          # typedef
+          cts.define_type cols[0],(cols[1]=='1'),(cols[2]=='1'),Integer(cols[3])
+        else
+          # error
+          parse_error line
+        end
+      }
+      cts
+    end
+    private
+    def self.parse_error line
+      raise "Illegal format: #{line}"
+    end
+  end
+  class CharType
+    def initialize name,invoke,group,length
+      @name,@invoke,@group,@length=name,invoke,group,length
+    end
+    attr_reader :name
+    attr_reader :length
+    def group?; @group; end
+    def invoke?; @invoke; end
+  end
   class Matrix
     def initialize mat
       @mat=mat

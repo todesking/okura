@@ -100,6 +100,42 @@ describe Okura::Features do
   end
 end
 
+describe Okura::CharTypes do
+  describe '.load_from_io' do
+	it 'インスタンスを構築できる' do
+	  cts=Okura::CharTypes.load_from_io(<<-EOS)
+DEFAULT 0 1 0
+TYPE1 1 0 0
+TYPE2 0 1 0
+TYPE3 0 1 3
+
+# comment
+
+0x0021 TYPE1
+0x0022 TYPE2 # comment
+0x0023..0x0040 TYPE3
+	  EOS
+
+	  cts.type_for(0x21).name.should == 'TYPE1'
+	  cts.type_for(0x22).name.should == 'TYPE2'
+	  cts.type_for(0x23).name.should == 'TYPE3'
+	  cts.type_for(0x40).name.should == 'TYPE3'
+	  cts.type_for(0x41).name.should == 'DEFAULT'
+
+	  cts.named('TYPE1').name.should == 'TYPE1'
+
+	  cts.named('TYPE1').invoke?.should be_true
+	  cts.named('TYPE2').invoke?.should be_false
+
+	  cts.named('TYPE1').group?.should be_false
+	  cts.named('TYPE2').group?.should be_true
+
+	  cts.named('TYPE2').length.should == 0
+	  cts.named('TYPE3').length.should == 3
+	end
+  end
+end
+
 describe Okura::Tagger do
   describe '#parse' do
     it '文字列を解析してNodesを返せる' do

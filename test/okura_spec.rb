@@ -104,8 +104,8 @@ describe Okura::CharTypes do
   describe '.load_from_io' do
 	it 'インスタンスを構築できる' do
 	  cts=Okura::CharTypes.load_from_io(<<-EOS)
-DEFAULT 0 1 0
-TYPE1 1 0 0
+DEFAULT     0 1 0
+TYPE1       1 0 0
 TYPE2 0 1 0
 TYPE3 0 1 3
 
@@ -115,6 +115,7 @@ TYPE3 0 1 3
 0x0022 TYPE2 # comment
 0x0023..0x0040 TYPE3
 0x0099 TYPE1 TYPE2 # 互換カテゴリ
+0xABCd TYPE1 DEFAULT
 	  EOS
 
 	  cts.type_for(0x21).name.should == 'TYPE1'

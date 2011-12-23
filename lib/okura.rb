@@ -161,13 +161,15 @@ module Okura
       fs
     end
   end
-  def CompositeDic
-    def initialize dictionaries
-      @dictionaries=dictionaries
+  class Dic
+    def initialize word_dic,unk_dic
+      @word_dic,@unk_dic=word_dic,unk_dic
     end
     # -> [Word]
     def possible_words str,i
-      @dictionaries.map{|dic|dic.possible_words(str,i)}.flatten(1)
+      ret=@word_dic.possible_words str,i
+      ret.concat(@unk_dic.possible_words(str,i,!ret.empty?))
+      ret
     end
   end
   class WordDic
@@ -293,11 +295,11 @@ module Okura
     def self.load_from_io io
       cts=CharTypes.new
       io.each_line{|line|
-        cols=line.gsub(/\s*#.*$/,'').split(/\s/)
+        cols=line.gsub(/\s*#.*$/,'').split(/\s+/)
         next if cols.empty?
 
         case cols[0]
-        when /^0x(\d{4})(?:\.\.0x(\d{4}))?$/
+        when /^0x([0-9a-fA-F]{4})(?:\.\.0x([0-9a-fA-F]{4}))?$/
           # mapping
           parse_error line unless cols.size >= 2
           type=cts.named cols[1]

@@ -6,6 +6,8 @@ Gem::Specification.new do |s|
   s.email       = 'discommunicative@gmail.com'
   s.homepage    = 'https://github.com/todesking/okura'
 
+  s.add_development_dependency 'rspec', ['~> 2.3.0']
+
   s.version     = '0.0.0.snapshot'
   s.files       = Dir['lib/**/*.rb'] + Dir['test/**/*.rb']
 end

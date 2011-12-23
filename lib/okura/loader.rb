@@ -36,7 +36,6 @@ module Okura
       end
       private
       def load_dict_file dict_dir,name
-        puts "loading #{name}..."
         open(File.join(dict_dir,name)){|f|
           yield f
         }

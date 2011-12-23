@@ -1,25 +1,29 @@
 #-*- coding:utf-8
 
 require File.join(File.dirname(__FILE__),'..','lib','okura')
+require File.join(File.dirname(__FILE__),'..','lib','okura','loader')
 
 def as_io str
   StringIO.new str
 end
-def w *args
-  Okura::Word.new *args
+def w surface,l,r,cost
+  l=f(l) unless l.respond_to? :id
+  r=f(r) unless r.respond_to? :id
+  Okura::Word.new surface,l,r,cost
 end
-def f *args
-  Okura::Feature.new *args
+def f id,name="F#{id}"
+  Okura::Feature.new id,name
 end
 def n *args
   Okura::Node.new *args
 end
 
-describe Okura::Matrix do
-  describe '.load_from_io' do
+describe Okura::Loader::MeCab do
+  subject { Okura::Loader::MeCab.new }
+  describe '#load_matrix' do
     describe 'left=right,マトリクスの全データがあるとき' do
       it 'インスタンスを構築できる' do
-        m=Okura::Matrix.load_from_io as_io(<<-EOS)
+        m=subject.load_matrix as_io(<<-EOS)
 2 2
 0 0 0
 0 1 1
@@ -32,61 +36,21 @@ describe Okura::Matrix do
       # TODO: エラー処理とかその他のパターン
     end
   end
-  describe '#cost' do
-    it '渡された二つのFeature idを元にコストを返せる' do
-      m=Okura::Matrix.load_from_io as_io(<<-EOS)
-2 2
-0 0 0
-0 1 1
-1 0 2
-1 1 3
-      EOS
-      m.cost(1,1).should == 3
-    end
-  end
-end
-
-describe Okura::WordDic do
-  describe '.load_from_io' do
+  describe '#load_words' do
     it 'インスタンスを構築できる' do
-      wd=Okura::WordDic.load_from_io(<<-EOS)
+	  fs=Okura::Features.new
+	  fs.add 854,'F1'
+	  fs.add 645,'F2'
+      wd=subject.load_words(<<-EOS,fs,fs)
 あがなう,854,854,6636,動詞,自立,*,*,五段・ワ行促音便,基本形,あがなう,アガナウ,アガナウ,あがなう/購う/贖う,
 あがめる,645,645,6636,動詞,自立,*,*,一段,基本形,あがめる,アガメル,アガメル,あがめる/崇める,
       EOS
       wd.size.should == 2
     end
   end
-
-  def w surface
-    Okura::Word.new surface,1,1,1
-  end
-
-  describe '#possible_words' do
-    it '文字列と位置から､辞書に登録された単語を返せる' do
-      wd=Okura::WordDic.new
-      wd.define w('aaa')
-      wd.define w('bbb')
-      wd.define w('aa')
-
-      wd.possible_words('bbbaaa',0).should == [w('bbb')]
-      wd.possible_words('bbbaaa',1).should == []
-      wd.possible_words('bbbaaa',3).should == [w('aa'),w('aaa')]
-    end
-    it '複雑な単語にも対応している' do
-      wd=Okura::WordDic.new
-      wd.define w('ニワトリ')
-
-      wd.possible_words('ニワトリ',0).should == [w('ニワトリ')]
-    end
-  end
-  describe '#define' do
-  end
-end
-
-describe Okura::Features do
-  describe '.load_from_io' do
+  describe '#load_features' do
     it 'インスタンスを構築できる' do
-      fs=Okura::Features.load_from_io(<<-EOS)
+      fs=subject.load_features(<<-EOS)
 0 BOS/EOS,*,*,*,*,*,BOS/EOS
 1 その他,間投,*,*,*,*,*
 2 フィラー,*,*,*,*,*,*
@@ -98,12 +62,9 @@ describe Okura::Features do
       fs.from_id(0).text.should == 'BOS/EOS,*,*,*,*,*,BOS/EOS'
     end
   end
-end
-
-describe Okura::CharTypes do
-  describe '.load_from_io' do
+  describe '#load_char_types' do
 	it 'インスタンスを構築できる' do
-	  cts=Okura::CharTypes.load_from_io(<<-EOS)
+	  cts=subject.load_char_types(<<-EOS)
 DEFAULT     0 1 0
 TYPE1       1 0 0
 TYPE2 0 1 0
@@ -145,6 +106,74 @@ TYPE3 0 1 3
 	  t1.should be_accept(0x99)
 	end
   end
+  describe '#load_from_io' do
+	it 'インスタンスを構築できる' do
+	  cts=Okura::CharTypes.new
+	  cts.define_type 'A',true,true,10
+	  cts.define_type 'Z',true,true,10
+	  cts.define_map 'A'.ord, cts.named('A'), []
+	  cts.define_map 'Z'.ord, cts.named('Z'), []
+
+	  fs=Okura::Features.new
+	  fs.add 5,'hoge'
+	  fs.add 9,'fuga'
+
+	  unk=subject.load_unk_dic(<<-EOS,cts,fs,fs)
+A,5,5,3274,記号,一般,*,*,*,*,*
+Z,9,9,5244,記号,空白,*,*,*,*,*
+	  EOS
+
+	  unk.possible_words('AZ',0,false).should == [w('A',f(5),f(5),3274)]
+	end
+  end
+end
+
+describe Okura::Matrix do
+  describe '#cost' do
+    it '渡された二つのFeature idを元にコストを返せる' do
+      m=Okura::Loader::MeCab.new.load_matrix as_io(<<-EOS)
+2 2
+0 0 0
+0 1 1
+1 0 2
+1 1 3
+      EOS
+      m.cost(1,1).should == 3
+    end
+  end
+end
+
+describe Okura::WordDic do
+  def w surface
+    Okura::Word.new surface,f(1),f(1),1
+  end
+
+  describe '#possible_words' do
+    it '文字列と位置から､辞書に登録された単語を返せる' do
+      wd=Okura::WordDic.new
+      wd.define w('aaa')
+      wd.define w('bbb')
+      wd.define w('aa')
+
+      wd.possible_words('bbbaaa',0).should == [w('bbb')]
+      wd.possible_words('bbbaaa',1).should == []
+      wd.possible_words('bbbaaa',3).should == [w('aa'),w('aaa')]
+    end
+    it '複雑な単語にも対応している' do
+      wd=Okura::WordDic.new
+      wd.define w('ニワトリ')
+
+      wd.possible_words('ニワトリ',0).should == [w('ニワトリ')]
+    end
+  end
+  describe '#define' do
+  end
+end
+
+describe Okura::Features do
+end
+
+describe Okura::CharTypes do
   describe '#type_for' do
 	describe '文字に対するCharTypeが定義されていない場合' do
 	  describe '文字種DEFAULTが定義されている場合' do
@@ -183,23 +212,6 @@ TYPE3 0 1 3
 end
 
 describe Okura::UnkDic do
-  describe '.load_from_io' do
-	it 'インスタンスを構築できる' do
-	  cts=Okura::CharTypes.new
-	  cts.define_type 'A',true,true,10
-	  cts.define_type 'Z',true,true,10
-	  cts.define_map 'A'.ord, cts.named('A'), []
-	  cts.define_map 'Z'.ord, cts.named('Z'), []
-
-	  unk=Okura::UnkDic.load_from_io(<<-EOS,cts)
-A,5,5,3274,記号,一般,*,*,*,*,*
-Z,9,9,5244,記号,空白,*,*,*,*,*
-	  EOS
-
-	  unk.possible_words('AZ',0,false).should == [w('A',5,5,3274)]
-	end
-  end
-
   describe '#possible_words' do
 	describe '互換カテゴリ' do
 	  subject {
@@ -209,8 +221,8 @@ Z,9,9,5244,記号,空白,*,*,*,*,*
 		cts.define_map 'ア'.ord,cts.named('KATAKANA'),[]
 		cts.define_map 'ー'.ord,cts.named('HIRAGANA'),[cts.named('KATAKANA')]
 		ud=Okura::UnkDic.new cts
-		ud.define 'KATAKANA',10,20,1000
-		ud.define 'HIRAGANA',1,2,1000
+		ud.define 'KATAKANA',f(10),f(20),1000
+		ud.define 'HIRAGANA',f(1),f(2),1000
 		ud
 	  }
 	  it '互換カテゴリを正しく解釈する' do
@@ -224,8 +236,8 @@ Z,9,9,5244,記号,空白,*,*,*,*,*
 		  cts.define_type 'A',true,true,0
 		  cts.define_map 'A'.ord,cts.named('A'),[]
 		  ud=Okura::UnkDic.new cts
-		  ud.define 'A',10,20,1000
-		  ud.define 'A',11,21,1111
+		  ud.define 'A',f(10),f(20),1000
+		  ud.define 'A',f(11),f(21),1111
 		  ud
 		end
 		it 'すべての定義から未知語を抽出する' do
@@ -243,7 +255,7 @@ Z,9,9,5244,記号,空白,*,*,*,*,*
 	  cts.define_type 'A',true,true,0
 	  cts.define_map 'あ'.ord,cts.named('A'),[]
 	  ud=Okura::UnkDic.new cts
-	  ud.define 'A',10,20,1000
+	  ud.define 'A',f(10),f(20),1000
 	  ud
 	end
 	describe 'UTF8文字列が来たとき' do
@@ -275,7 +287,7 @@ Z,9,9,5244,記号,空白,*,*,*,*,*
 	end
 	def create_subject typename_under_test
 	  udic=Okura::UnkDic.new create_chartypes(typename_under_test)
-	  udic.define typename_under_test,10,20,1000
+	  udic.define typename_under_test,f(10),(20),1000
 	  udic
 	end
 	describe 'invoke=0のとき' do
@@ -355,12 +367,12 @@ describe Okura::Tagger do
       dic.define w('a',1,1,0)
       dic.define w('aa',1,1,10)
       dic.define w('b',2,2,3)
-      tagger=Okura::Tagger.new dic
+      tagger=Okura::Tagger.new dic,nil
 
       nodes=tagger.parse('aab')
 
-      nodes[0][0].word.should == w('BOS',0,0,0)
-      nodes[4][0].word.should == w('EOS',0,0,0)
+      nodes[0][0].word.should == w('BOS/EOS',0,0,0)
+      nodes[4][0].word.should == w('BOS/EOS',0,0,0)
       nodes[1].size.should == 2
       nodes[3][0].word.should == w('b',2,2,3)
     end
@@ -368,17 +380,10 @@ describe Okura::Tagger do
 end
 
 describe Okura::Node do
-  describe '#make_eos' do
+  describe '#make_bos_eos' do
     describe '#length' do
       it 'returns 1' do
-        Okura::Node.mk_eos.length.should == 1
-      end
-    end
-  end
-  describe '#make_bos' do
-    describe '#length' do
-      it 'returns 1' do
-        Okura::Node.mk_bos.length.should == 1
+        Okura::Node.mk_bos_eos.length.should == 1
       end
     end
   end
@@ -390,35 +395,35 @@ describe Okura::Nodes do
       mat=Okura::Matrix.new (0...2).map{[nil]*2}
       mat.set(0,1,10)
       mat.set(1,0,10)
-      nodes=Okura::Nodes.new 3
-      nodes.add(0,Okura::Node.mk_bos)
+      nodes=Okura::Nodes.new 3,mat
+      nodes.add(0,Okura::Node.mk_bos_eos)
       nodes.add(1,n(w('a',1,1,10)))
       nodes.add(1,n(w('b',1,1,0)))
-      nodes.add(2,Okura::Node.mk_eos)
+      nodes.add(2,Okura::Node.mk_bos_eos)
 
-      mcp=nodes.mincost_path mat
+      mcp=nodes.mincost_path
       mcp.length.should == 3
-      mcp[0].word.surface.should == 'BOS'
+      mcp[0].word.surface.should == 'BOS/EOS'
       mcp[1].word.surface.should == 'b'
-      mcp[2].word.surface.should == 'EOS'
+      mcp[2].word.surface.should == 'BOS/EOS'
     end
     it '単語長が1を超えても動く' do
       mat=Okura::Matrix.new (0...2).map{[nil]*2}
       mat.set(0,1,10)
       mat.set(1,0,10)
       mat.set(1,1,10)
-      nodes=Okura::Nodes.new 4
-      nodes.add(0,Okura::Node.mk_bos)
+      nodes=Okura::Nodes.new 4,mat
+      nodes.add(0,Okura::Node.mk_bos_eos)
       nodes.add(1,n(w('a',1,1,10)))
       nodes.add(1,n(w('bb',1,1,0)))
       nodes.add(2,n(w('a',1,1,10)))
-      nodes.add(3,Okura::Node.mk_eos)
+      nodes.add(3,Okura::Node.mk_bos_eos)
 
-      mcp=nodes.mincost_path mat
+      mcp=nodes.mincost_path
       mcp.length.should == 3
-      mcp[0].word.surface.should == 'BOS'
+      mcp[0].word.surface.should == 'BOS/EOS'
       mcp[1].word.surface.should == 'bb'
-      mcp[2].word.surface.should == 'EOS'
+      mcp[2].word.surface.should == 'BOS/EOS'
     end
   end
 end

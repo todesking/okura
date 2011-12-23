@@ -8,22 +8,22 @@ end
 
 module Okura
   class Tagger
-    def initialize dic
-      @dic=dic
+    def initialize dic,mat
+      @dic,@mat=dic,mat
     end
     attr_reader :dic
     # -> [String]
     def wakati str,mat
-      mincost_path=parse(str).mincost_path mat
+      mincost_path=parse(str).mincost_path
       return nil if mincost_path.nil?
       return mincost_path.map{|node|node.word.surface}
     end
     # -> Nodes
     def parse str
       chars=str.split(//)
-      nodes=Nodes.new(chars.length+2)
-      nodes.add(0,Node.mk_bos)
-      nodes.add(chars.length+1,Node.mk_eos)
+      nodes=Nodes.new(chars.length+2,@mat)
+      nodes.add(0,Node.mk_bos_eos)
+      nodes.add(chars.length+1,Node.mk_bos_eos)
       str.length.times{|i|
         @dic.possible_words(str,i).each{|w|
           nodes.add(i+1,Node.new(w))
@@ -33,7 +33,8 @@ module Okura
     end
   end
   class Nodes
-    def initialize len
+    def initialize len,mat
+      @mat=mat
       @begins=(0...len).map{[]}
       @ends=(0...len).map{[]}
     end
@@ -44,7 +45,7 @@ module Okura
       @begins.length
     end
     # Matrix -> [Node] | nil
-    def mincost_path mat
+    def mincost_path
       return [] if length==0
       # calc cost
       self[0].each{|n|
@@ -58,7 +59,7 @@ module Okura
           # 途中で行き止まりのNodeはtotal_costが設定されない
           next if prev.total_cost.nil?
           curs.each{|cur|
-            join_cost=mat.cost(prev.word.rid,cur.word.lid)
+            join_cost=@mat.cost(prev.word.right.id,cur.word.left.id)
             next if join_cost.nil?
             cost=prev.total_cost+join_cost+cur.word.cost
             if !cur.total_cost || cost < cur.total_cost
@@ -100,32 +101,31 @@ module Okura
     def to_s
       "Node(#{word},#{total_cost})"
     end
-    def self.mk_bos
-      node=Node.new Word.new('BOS',0,0,0)
-      node.total_cost=0
-      def node.length; 1; end
-      node
-    end
-    def self.mk_eos
-      node=Node.new Word.new('EOS',0,0,0)
+    def self.mk_bos_eos
+      f=Features::BOS_EOS
+      node=Node.new Word.new('BOS/EOS',f,f,0)
       def node.length; 1; end
       node
     end
   end
   class Word
-    def initialize surface,lid,rid,cost
-      @surface,@lid,@rid,@cost=surface,lid,rid,cost
+    def initialize surface,left,right,cost
+      raise unless left.respond_to? :text
+      @surface,@left,@right,@cost=surface,left,right,cost
     end
     attr_reader :surface
-    attr_reader :lid
-    attr_reader :rid
+    attr_reader :left
+    attr_reader :right
     attr_reader :cost
     def == other
-      return [surface,lid,rid,cost] ==
-        [other.surface,other.lid,other.rid,other.cost]
+      return [surface,left,right,cost] ==
+        [other.surface,other.left,other.right,other.cost]
+    end
+    def hash
+      [surface,left,right,cost].hash
     end
     def to_s
-      "Word(#{surface},#{lid},#{rid},#{cost})"
+      "Word(#{surface},#{left.id},#{right.id},#{cost})"
     end
   end
   class Feature
@@ -137,6 +137,12 @@ module Okura
     def to_s
       "Feature(#{id},#{text})"
     end
+    def == other
+      return self.id==other.id
+    end
+    def hash
+      self.id.hash
+    end
   end
   class Features
     def initialize
@@ -145,21 +151,13 @@ module Okura
     def from_id id
       @map_id[id]
     end
-    def add feature
-      @map_id[feature.id]=feature
+    def add id,text
+      @map_id[id]=Feature.new id,text
     end
     def size
       @map_id.size
     end
-    def self.load_from_io io
-      fs=Features.new
-      io.each_line{|line|
-        id_s,name=line.strip.split(/ /,2)
-        id=id_s.to_i
-        fs.add Feature.new(id,name)
-      }
-      fs
-    end
+    BOS_EOS=Feature.new 0,'BOS/EOS'
   end
   class Dic
     def initialize word_dic,unk_dic
@@ -210,16 +208,6 @@ module Okura
     def possible_words str,i
       @root.find_all str,i
     end
-    # IO -> WordDic
-    def self.load_from_io io
-      wd=WordDic.new
-      io.each_line {|line|
-        surface,lid_s,rid_s,cost_s,*rest=line.split(/,/,5)
-        lid,rid,cost=[lid_s,rid_s,cost_s].map(&:to_i)
-        wd.define Word.new(surface,lid,rid,cost)
-      }
-      wd
-    end
   end
   class UnkDic
     def initialize char_types
@@ -248,23 +236,13 @@ module Okura
     private
     def collect_result ret,type,surface
       (@templates[type.name]||[]).each{|tp|
-        ret.push Word.new surface,tp.lid,tp.rid,tp.cost
+        ret.push Word.new surface,tp.left,tp.right,tp.cost
       }
     end
     public
-    def define type_name,lid,rid,cost
+    def define type_name,left,right,cost
       type=@char_types.named type_name
-      (@templates[type_name]||=[]).push Word.new '',lid,rid,cost
-    end
-    # -> UnkDic
-    def self.load_from_io io,char_types
-      udic=UnkDic.new char_types
-      io.each_line {|line|
-        type_s,lid_s,rid_s,cost_s,additional=line.split(/,/,5)
-        lid,rid,cost=[lid_s,rid_s,cost_s].map(&:to_i)
-        udic.define type_s,lid,rid,cost
-      }
-      udic
+      (@templates[type_name]||=[]).push Word.new '',left,right,cost
     end
   end
   class CharTypes
@@ -291,40 +269,6 @@ module Okura
     end
     def default_type
       named 'DEFAULT'
-    end
-    def self.load_from_io io
-      cts=CharTypes.new
-      io.each_line{|line|
-        cols=line.gsub(/\s*#.*$/,'').split(/\s+/)
-        next if cols.empty?
-
-        case cols[0]
-        when /^0x([0-9a-fA-F]{4})(?:\.\.0x([0-9a-fA-F]{4}))?$/
-          # mapping
-          parse_error line unless cols.size >= 2
-          type=cts.named cols[1]
-          compat_types=cols[2..-1].map{|name|cts.named name}
-          if $2
-            ($1.to_i(16)..$2.to_i(16)).each{|c|
-              cts.define_map(c,type,compat_types)
-            }
-          else
-            cts.define_map($1.to_i(16),type,compat_types)
-          end
-        when /^\w+$/
-          parse_error line unless cols.size == 4
-          # typedef
-          cts.define_type cols[0],(cols[1]=='1'),(cols[2]=='1'),Integer(cols[3])
-        else
-          # error
-          parse_error line
-        end
-      }
-      cts
-    end
-    private
-    def self.parse_error line
-      raise "Illegal format: #{line}"
     end
   end
   class CharType
@@ -359,16 +303,6 @@ module Okura
     end
     def lsize
       rsize==0 ? 0 : @mat.first.size
-    end
-    # -> Matrix
-    def self.load_from_io io
-      rsize,lsize=io.readline.split(/\s/).map(&:to_i)
-      mat_arr=(0...rsize).map{[nil]*lsize}
-      io.each_line{|line|
-        rid,lid,cost=line.split(/\s/).map(&:to_i)
-        mat_arr[rid][lid]=cost
-      }
-      Matrix.new mat_arr
     end
   end
 end

@@ -10,6 +10,11 @@ commands={
 	dict_dir=args[0]
 	Okura::Console.new.run_console dict_dir
   },
+  :compile => lambda {|args|
+	raise IllegalOption.new('Usage: compile dict_dir dest_dir') unless args.length==2
+	require 'okura/compiler'
+	Okura::Compiler.compile(args[0],args[1])
+  },
   :help => lambda {|args|
 	puts <<-EOS
 USAGE: okura command args
@@ -20,7 +25,7 @@ command:
   }
 }
 
-class IllegalOption
+class IllegalOption < StandardError
   def initialize msg
 	@message=msg
   end

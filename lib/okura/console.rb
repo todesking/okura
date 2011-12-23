@@ -4,7 +4,7 @@ require 'okura/loader'
 module Okura
   class Console
 	def run_console dict_dir
-	  tagger=Okura::Loader::MeCab.new.load(dict_dir)
+	  tagger=Okura::Loader::Marshal.new.load(dict_dir)
 	  print 'okura> '
 	  while $stdin.gets
 		nodes=tagger.parse($_.strip)

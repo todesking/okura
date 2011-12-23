@@ -1,3 +1,4 @@
+require 'okura'
 module Okura
   module Loader
     # MeCab形式のプレインテキスト用
@@ -111,6 +112,11 @@ module Okura
       private
       def parse_error line
         raise "Illegal format: #{line}"
+      end
+    end
+    class Marshal
+      def load dict_dir
+        open(File.join(dict_dir,'okura.bin')){|f| ::Marshal.load f }
       end
     end
   end

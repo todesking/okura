@@ -2,6 +2,45 @@
 # -*- filetype:ruby -*-
 
 require 'rubygems'
-require 'okura/console'
 
-Okura::Console.new.run_console $*
+commands={
+  :console => lambda {|args|
+	require 'okura/console'
+	raise IllegalOption.new('Usage: console dict_dir') unless args.length==1
+	dict_dir=args[0]
+	Okura::Console.new.run_console dict_dir
+  },
+  :help => lambda {|args|
+	puts <<-EOS
+USAGE: okura command args
+command:
+  console dict_dir
+  help
+	EOS
+  }
+}
+
+class IllegalOption
+  def initialize msg
+	@message=msg
+  end
+  attr_reader :message
+end
+
+if $*.empty?
+  commands[:help].call []
+else
+  command=$*.first.to_sym
+  unless commands.has_key? command
+	commands[:help].call []
+	exit 1
+  end
+  begin
+	commands[command].call $*[1..-1]
+  rescue IllegalOption
+	$stderr.puts $!.message
+	exit 1
+  end
+end
+
+

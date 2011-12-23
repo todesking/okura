@@ -35,16 +35,8 @@ module Okura
 	end
 	public
 
-	def print_usage
-	  puts "USAGE: #{$0} dict_dir"
-	end
-
-	def run_console argv
-	  unless argv.length==1
-		print_usage
-		return 1
-	  end
-	  load_dictionaries argv[0]
+	def run_console dict_dir
+	  load_dictionaries dict_dir
 	  print 'okura> '
 	  while $stdin.gets
 		nodes=@tagger.parse($_.strip)

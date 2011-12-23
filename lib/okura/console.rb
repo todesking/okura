@@ -53,7 +53,7 @@ module Okura
 		  puts
 		}
 		nodes.mincost_path(@mat).each{|node|
-		  puts "#{node.word}\t#{@rids.from_id node.word.rid}"
+		  puts "#{node.word.surface}\t#{@rids.from_id node.word.rid}"
 		}
 		print 'okura> '
 	  end

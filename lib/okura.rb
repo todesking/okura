@@ -220,14 +220,44 @@ module Okura
     end
   end
   class UnkDic
+    def initialize char_types
+      @char_types=char_types
+      # CharType.name => [Word]
+      @templates={}
+    end
     # -> [Word]
     def possible_words str,i
-      todo
-      []
+      ret=[]
+      first_char_type=@char_types.type_for str[i].ord
+      collect_result ret,first_char_type,str[i..i]
+      x=i+1
+      str[(i+1)..-1].each_codepoint{|cp|
+        break unless first_char_type.accept? cp
+        x+=1
+        collect_result ret,first_char_type,str[i...x]
+      }
+      ret
+    end
+    private
+    def collect_result ret,type,surface
+      @templates[type.name].each{|tp|
+        ret.push Word.new surface,tp.lid,tp.rid,tp.cost
+      }
+    end
+    public
+    def define type_name,lid,rid,cost
+      type=@char_types.named type_name
+      (@templates[type_name]||=[]).push Word.new '',lid,rid,cost
     end
     # -> UnkDic
-    def self.load_from_io io
-      todo
+    def self.load_from_io io,char_types
+      udic=UnkDic.new char_types
+      io.each_line {|line|
+        type_s,lid_s,rid_s,cost_s,additional=line.split(/,/,5)
+        lid,rid,cost=[lid_s,rid_s,cost_s].map(&:to_i)
+        udic.define type_s,lid,rid,cost
+      }
+      udic
     end
   end
   class CharTypes

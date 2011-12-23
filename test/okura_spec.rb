@@ -146,6 +146,27 @@ TYPE3 0 1 3
   end
 end
 
+describe Okura::UnkDic do
+  describe '.load_from_io' do
+	it 'インスタンスを構築できる' do
+	  cts=Okura::CharTypes.new
+	  cts.define_type 'A',true,true,0
+	  cts.define_type 'Z',true,true,0
+	  cts.define_map 'A'.ord, cts.named('A'), []
+	  cts.define_map 'Z'.ord, cts.named('Z'), []
+
+	  unk=Okura::UnkDic.load_from_io(<<-EOS,cts)
+A,5,5,3274,記号,一般,*,*,*,*,*
+Z,9,9,5244,記号,空白,*,*,*,*,*
+	  EOS
+
+	  unk.possible_words('AZ',0).should == [w('A',5,5,3274)]
+	end
+  end
+  # TODO: possible_wordsにおける､CharTypeの違いによる未知語抽出処理の変化
+  # TODO: possible_wordsにおける､UTF8以外の文字列の扱い
+end
+
 describe Okura::Tagger do
   describe '#parse' do
     it '文字列を解析してNodesを返せる' do

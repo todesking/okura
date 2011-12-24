@@ -392,7 +392,7 @@ end
 describe Okura::Nodes do
   describe '#mincost_path' do
     it '最小コストのパスを返せる' do
-      mat=Okura::Matrix.new (0...2).map{[nil]*2}
+      mat=Okura::Matrix.new 2,2
       mat.set(0,1,10)
       mat.set(1,0,10)
       nodes=Okura::Nodes.new 3,mat
@@ -408,7 +408,7 @@ describe Okura::Nodes do
       mcp[2].word.surface.should == 'BOS/EOS'
     end
     it '単語長が1を超えても動く' do
-      mat=Okura::Matrix.new (0...2).map{[nil]*2}
+      mat=Okura::Matrix.new 2,2
       mat.set(0,1,10)
       mat.set(1,0,10)
       mat.set(1,1,10)

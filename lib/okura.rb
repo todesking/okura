@@ -288,21 +288,18 @@ module Okura
     end
   end
   class Matrix
-    def initialize mat
-      @mat=mat
+    def initialize rsize,lsize
+      @mat=[nil]*(lsize*rsize)
+      @lsize,@rsize=lsize,rsize
     end
-    # Feature -> Feature -> Int
+    # Feature.id -> Feature.id -> Int
     def cost rid,lid
-      @mat[rid][lid]
+      @mat[rid*lsize+lid]
     end
     def set(rid,lid,cost)
-      @mat[rid][lid]=cost
+      @mat[rid*lsize+lid]=cost
     end
-    def rsize
-      @mat.size
-    end
-    def lsize
-      rsize==0 ? 0 : @mat.first.size
-    end
+    attr_reader :rsize
+    attr_reader :lsize
   end
 end

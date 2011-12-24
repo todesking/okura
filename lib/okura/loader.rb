@@ -45,12 +45,12 @@ module Okura
 
       def load_matrix io
         rsize,lsize=io.readline.split(/\s/).map(&:to_i)
-        mat_arr=(0...rsize).map{[nil]*lsize}
+        mat=Matrix.new rsize,lsize
         io.each_line{|line|
           rid,lid,cost=line.split(/\s/).map(&:to_i)
-          mat_arr[rid][lid]=cost
+          mat.set(rid,lid,cost)
         }
-        Matrix.new mat_arr
+        mat
       end
       def load_words io,lefts,rights
         wd=WordDic.new

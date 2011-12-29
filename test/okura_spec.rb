@@ -150,7 +150,7 @@ describe Okura::WordDic do
 
   describe '#possible_words' do
     it '文字列と位置から､辞書に登録された単語を返せる' do
-      wd=Okura::WordDic.new
+      wd=Okura::WordDic::Naive.new
       wd.define w('aaa')
       wd.define w('bbb')
       wd.define w('aa')
@@ -160,7 +160,7 @@ describe Okura::WordDic do
       wd.possible_words('bbbaaa',3).should == [w('aa'),w('aaa')]
     end
     it '複雑な単語にも対応している' do
-      wd=Okura::WordDic.new
+      wd=Okura::WordDic::Naive.new
       wd.define w('ニワトリ')
 
       wd.possible_words('ニワトリ',0).should == [w('ニワトリ')]
@@ -363,7 +363,7 @@ end
 describe Okura::Tagger do
   describe '#parse' do
     it '文字列を解析してNodesを返せる' do
-      dic=Okura::WordDic.new
+      dic=Okura::WordDic::Naive.new
       dic.define w('a',1,1,0)
       dic.define w('aa',1,1,10)
       dic.define w('b',2,2,3)

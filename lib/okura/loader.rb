@@ -53,7 +53,7 @@ module Okura
         mat
       end
       def load_words io,lefts,rights
-        wd=WordDic.new
+        wd=Okura::WordDic::Naive.new
         io.each_line {|line|
           surface,lid_s,rid_s,cost_s,*rest=line.split(/,/,5)
           lid,rid,cost=[lid_s,rid_s,cost_s].map(&:to_i)

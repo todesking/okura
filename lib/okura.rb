@@ -170,43 +170,47 @@ module Okura
       ret
     end
   end
-  class WordDic
-    def initialize
-      @size=0
-      @root=TrieNode.new
-    end
-    class TrieNode
+  module WordDic
+    class Naive
       def initialize
-        @nodes={}
-        @leafs=[]
+        @size=0
+        @root=TrieNode.new
       end
-      def add word,i=0
-        if i==word.surface.length
-          @leafs.push word
-        else
-          fst=word.surface[i]
-          node=@nodes[fst]
-          @nodes[fst]=node=TrieNode.new if node.nil?
-          node.add word,i+1
+      class TrieNode
+        def initialize
+          @nodes={}
+          @leafs=[]
+        end
+        def add word,i=0
+          if i==word.surface.length
+            @leafs.push word
+          else
+            fst=word.surface[i]
+            node=@nodes[fst]
+            @nodes[fst]=node=TrieNode.new if node.nil?
+            node.add word,i+1
+          end
+        end
+        def find_all str,i,res=Array.new
+          res.concat @leafs
+          return res unless i < str.length
+          node=@nodes[str[i]]
+          return res if node.nil?
+          node.find_all(str,i+1,res)
+          res
         end
       end
-      def find_all str,i,res=Array.new
-        res.concat @leafs
-        return res unless i < str.length
-        node=@nodes[str[i]]
-        return res if node.nil?
-        node.find_all(str,i+1,res)
-        res
+      attr_reader :size
+      def define word
+        @size+=1
+        @root.add word
+      end
+      # -> [Word]
+      def possible_words str,i
+        @root.find_all str,i
       end
     end
-    attr_reader :size
-    def define word
-      @size+=1
-      @root.add word
-    end
-    # -> [Word]
-    def possible_words str,i
-      @root.find_all str,i
+    class DoubleArray
     end
   end
   class UnkDic

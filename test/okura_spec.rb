@@ -143,31 +143,49 @@ describe Okura::Matrix do
   end
 end
 
-describe Okura::WordDic do
+shared_examples_for 'WordDic' do
+  # subject = dict builder
   def w surface
     Okura::Word.new surface,f(1),f(1),1
   end
 
   describe '#possible_words' do
     it '文字列と位置から､辞書に登録された単語を返せる' do
-      wd=Okura::WordDic::Naive.new
-      wd.define w('aaa')
-      wd.define w('bbb')
-      wd.define w('aa')
+      subject.define w('aaa')
+      subject.define w('bbb')
+      subject.define w('aa')
+      subject.define w('aaaa')
+      subject.define w('aaaaa')
+
+      wd=subject.build
 
       wd.possible_words('bbbaaa',0).should == [w('bbb')]
       wd.possible_words('bbbaaa',1).should == []
       wd.possible_words('bbbaaa',3).should == [w('aa'),w('aaa')]
     end
     it '複雑な単語にも対応している' do
-      wd=Okura::WordDic::Naive.new
-      wd.define w('ニワトリ')
+      subject.define w('ニワトリ')
+      wd=subject.build
 
       wd.possible_words('ニワトリ',0).should == [w('ニワトリ')]
     end
   end
-  describe '#define' do
+end
+
+describe Okura::WordDic::Naive do
+  class NaiveBuilder
+    def initialize
+      @wd=Okura::WordDic::Naive.new
+    end
+    def define *args
+      @wd.define *args
+    end
+    def build
+      @wd
+    end
   end
+  subject { NaiveBuilder.new }
+  it_should_behave_like 'WordDic'
 end
 
 describe Okura::Features do

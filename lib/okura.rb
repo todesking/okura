@@ -233,13 +233,16 @@ module Okura
       end
       class Builder
         class DAData
-          def initialize
+          def initialize root
             @base=[]
             @check=[nil]
             @used=[true]
+            construct root
           end
           attr_reader :base
           attr_reader :check
+
+          private
           def construct node
             s=alloc 0,node
             @base[0]=s
@@ -247,7 +250,7 @@ module Okura
           end
           def alloc parent,node
             s=nil
-            self.length.times{|i|
+            length.times{|i|
               if (!node.has_data? || !@used[i]) && node.children.keys.none?{|c|@used[i+c+1]}
                 s=i
                 break
@@ -289,7 +292,6 @@ module Okura
             }
             ret
           end
-          private
           def assert cond
             raise 'assertion error' unless cond
           end
@@ -322,9 +324,7 @@ module Okura
           @root.add key,0,wid
         end
         def build
-          da=DAData.new
-          da.construct @root
-
+          da=DAData.new @root
           DoubleArray.new @words,da.base,da.check
         end
       end

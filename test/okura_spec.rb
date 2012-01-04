@@ -175,27 +175,27 @@ shared_examples_for 'WordDic' do
       dic=subject.build
       dic.possible_words(str,0).should == dest.map{|d|w(d)}
     end
-    it { matches %w()        , ''     , %w() }
-    it { matches %w()        , 'aaa'  , %w() }
-    it { matches %w(a)       , ''     , %w() }
-    it { matches %w(a)       , 'a'    , %w(a) }
-    it { matches %w(a)       , 'aa'   , %w(a) }
-    it { matches %w(a)       , 'b'    , %w() }
-    it { matches %w(aa)      , 'a'    , %w() }
-    it { matches %w(aa)      , 'aa'   , %w(aa) }
-    it { matches %w(aa)      , 'aaa'  , %w(aa) }
-    it { matches %w(aa)      , 'ab'   , %w() }
-    it { matches %w(a aa)    , 'a'    , %w(a) }
-    it { matches %w(a aa)    , 'aa'   , %w(a aa) }
-    it { matches %w(a aa)    , 'aaa'  , %w(a aa) }
-    it { matches %w(a aa)    , 'aab'  , %w(a aa) }
-    it { matches %w(a aa ab) , 'aab'  , %w(a aa) }
-    it { matches %w(a aa ab) , 'ab'   , %w(a ab) }
-    it { matches %w(a aa ab) , 'aa'   , %w(a aa) }
-    it { matches %w(a b)     , 'ba'   , %w(b) }
-    it { matches %w(アイウ)     , 'アイウ'  , %w(アイウ) }
-    it { matches %w(ア アイ)    , 'アイウ'  , %w(ア アイ) }
-    it { matches %w(ア アイ)    , 'aアイウ' , %w() }
+    it { matches %w()        , ''        , %w() }
+    it { matches %w()        , 'aaa'     , %w() }
+    it { matches %w(a)       , ''        , %w() }
+    it { matches %w(a)       , 'a'       , %w(a) }
+    it { matches %w(a)       , 'aa'      , %w(a) }
+    it { matches %w(a)       , 'b'       , %w() }
+    it { matches %w(aa)      , 'a'       , %w() }
+    it { matches %w(aa)      , 'aa'      , %w(aa) }
+    it { matches %w(aa)      , 'aaa'     , %w(aa) }
+    it { matches %w(aa)      , 'ab'      , %w() }
+    it { matches %w(a aa)    , 'a'       , %w(a) }
+    it { matches %w(a aa)    , 'aa'      , %w(a aa) }
+    it { matches %w(a aa)    , 'aaa'     , %w(a aa) }
+    it { matches %w(a aa)    , 'aab'     , %w(a aa) }
+    it { matches %w(a aa ab) , 'aab'     , %w(a aa) }
+    it { matches %w(a aa ab) , 'ab'      , %w(a ab) }
+    it { matches %w(a aa ab) , 'aa'      , %w(a aa) }
+    it { matches %w(a b)     , 'ba'      , %w(b) }
+    it { matches %w(アイウ)  , 'アイウ'  , %w(アイウ) }
+    it { matches %w(ア アイ) , 'アイウ'  , %w(ア アイ) }
+    it { matches %w(ア アイ) , 'aアイウ' , %w() }
   end
 end
 

@@ -163,12 +163,39 @@ shared_examples_for 'WordDic' do
       wd.possible_words('bbbaaa',1).should == []
       wd.possible_words('bbbaaa',3).should == [w('aa'),w('aaa')]
     end
-    it '複雑な単語にも対応している' do
+    it 'マルチバイト文字にも対応している' do
       subject.define w('ニワトリ')
       wd=subject.build
 
       wd.possible_words('ニワトリ',0).should == [w('ニワトリ')]
+      wd.possible_words('ニワトリ',1).should == []
     end
+    def matches words,str,dest
+      words.each{|word| subject.define w(word) }
+      dic=subject.build
+      dic.possible_words(str,0).should == dest.map{|d|w(d)}
+    end
+    it { matches %w()        , ''     , %w() }
+    it { matches %w()        , 'aaa'  , %w() }
+    it { matches %w(a)       , ''     , %w() }
+    it { matches %w(a)       , 'a'    , %w(a) }
+    it { matches %w(a)       , 'aa'   , %w(a) }
+    it { matches %w(a)       , 'b'    , %w() }
+    it { matches %w(aa)      , 'a'    , %w() }
+    it { matches %w(aa)      , 'aa'   , %w(aa) }
+    it { matches %w(aa)      , 'aaa'  , %w(aa) }
+    it { matches %w(aa)      , 'ab'   , %w() }
+    it { matches %w(a aa)    , 'a'    , %w(a) }
+    it { matches %w(a aa)    , 'aa'   , %w(a aa) }
+    it { matches %w(a aa)    , 'aaa'  , %w(a aa) }
+    it { matches %w(a aa)    , 'aab'  , %w(a aa) }
+    it { matches %w(a aa ab) , 'aab'  , %w(a aa) }
+    it { matches %w(a aa ab) , 'ab'   , %w(a ab) }
+    it { matches %w(a aa ab) , 'aa'   , %w(a aa) }
+    it { matches %w(a b)     , 'ba'   , %w(b) }
+    it { matches %w(アイウ)     , 'アイウ'  , %w(アイウ) }
+    it { matches %w(ア アイ)    , 'アイウ'  , %w(ア アイ) }
+    it { matches %w(ア アイ)    , 'aアイウ' , %w() }
   end
 end
 
@@ -186,6 +213,36 @@ describe Okura::WordDic::Naive do
   end
   subject { NaiveBuilder.new }
   it_should_behave_like 'WordDic'
+end
+
+describe Okura::WordDic::DoubleArray do
+  subject { Okura::WordDic::DoubleArray::Builder.new }
+  def base(dic)
+    dic.instance_eval{@base}
+  end
+  def check(dic)
+    dic.instance_eval{@check}
+  end
+  def words(dic)
+    dic.instance_eval{@words}
+  end
+  it_should_behave_like 'WordDic'
+  describe 'when empty' do
+    it 'should one-element arrays' do
+      dic=subject.build
+      base(dic).should == [0]
+      check(dic).should == [nil]
+    end
+  end
+  describe 'when a single-char word defined' do
+    it 'should 4-elements arrays' do
+      subject.define w("\u0001",1,2,3)
+      dic=subject.build
+      words(dic).should == [w("\u0001",1,2,3)]
+      base(dic).should == [0,-1,1]
+      check(dic).should == [nil,2,0]
+    end
+  end
 end
 
 describe Okura::Features do

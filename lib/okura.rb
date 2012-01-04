@@ -211,6 +211,123 @@ module Okura
       end
     end
     class DoubleArray
+      def initialize words,base,check
+        @words,@base,@check=words,base,check
+      end
+      def possible_words str,i
+        ret=[]
+        prev=nil
+        cur=0
+        str[i..-1].bytes.each{|c|
+          next_index=@base[cur]+c+1
+          break unless @check[next_index]==cur
+          prev,cur=cur,next_index
+          # check EOS node
+          eos_index=@base[cur]
+          if @check[eos_index]==cur
+            raise "@base[#{eos_index}] should < 0 but #{@base[eos_index]}" unless @base[eos_index] < 0
+            ret.push -@base[eos_index]-1
+          end
+        }
+        return ret.map{|x|@words[x]}
+      end
+      class Builder
+        class DAData
+          def initialize
+            @base=[]
+            @check=[nil]
+            @used=[true]
+          end
+          attr_reader :base
+          attr_reader :check
+          def construct node
+            s=alloc 0,node
+            @base[0]=s
+            return s
+          end
+          def alloc parent,node
+            s=nil
+            self.length.times{|i|
+              if (!node.has_data? || !@used[i]) && node.children.keys.none?{|c|@used[i+c+1]}
+                s=i
+                break
+              end
+            }
+            s=self.length if s.nil?
+
+            @used[s]=true if node.has_data?
+            node.children.keys.each{|c|
+              @used[s+c+1]=true
+            }
+
+            if node.has_data?
+              idx=s+0
+              assert @used[idx]
+              @base[idx]=-node.data-1
+              @check[idx]=parent
+            end
+            node.children.each{|c,cn|
+              assert 0<=c
+              idx=s+c+1
+              assert @used[idx]
+              cs=alloc idx,cn
+              @base[idx]=cs
+              @check[idx]=parent
+            }
+            s
+          end
+          def length
+            [@base,@check,@used].map(&:length).max
+          end
+          def to_s indent=0,parent=0
+            ret="#{' '*indent}+ #{parent}"
+            length.times{|i|
+              if @check[i]==parent
+                ret+="\n#{' '*indent}  base=#{base[i]}"
+                ret+="\n"+to_s(indent+2,i)
+              end
+            }
+            ret
+          end
+          private
+          def assert cond
+            raise 'assertion error' unless cond
+          end
+        end
+        class Node
+          def initialize
+            @children={}
+            @data=nil
+          end
+          def has_data?; !@data.nil?; end
+          attr_reader :children
+          attr_reader :data
+          def add key,i,data
+            if key.length==i
+              @data=data
+            else
+              child_node=( @children[key[i]]||=Node.new )
+              child_node.add key,i+1,data
+            end
+          end
+        end
+        def initialize
+          @root=Node.new
+          @words=[]
+        end
+        def define word
+          wid=@words.length
+          @words.push word
+          key=word.surface.bytes.to_a
+          @root.add key,0,wid
+        end
+        def build
+          da=DAData.new
+          da.construct @root
+
+          DoubleArray.new @words,da.base,da.check
+        end
+      end
     end
   end
   class UnkDic

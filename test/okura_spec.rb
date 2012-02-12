@@ -1,7 +1,7 @@
 #-*- coding:utf-8
-
 require File.join(File.dirname(__FILE__),'..','lib','okura')
 require File.join(File.dirname(__FILE__),'..','lib','okura','loader')
+require File.join(File.dirname(__FILE__),'..','lib','okura','parser')
 
 def as_io str
   StringIO.new str
@@ -16,6 +16,28 @@ def f id,name="F#{id}"
 end
 def n *args
   Okura::Node.new *args
+end
+
+describe Okura::Parser::Matrix do
+  it 'MeCab形式のMatrixファイルを読める' do
+    parser=Okura::Parser::Matrix.new as_io(<<-EOS)
+2 3
+0 0 0
+0 1 1
+1 0 2
+1 1 3
+1 2 10
+    EOS
+    parser.rid_size.should == 2
+    parser.lid_size.should == 3
+    parser.each.to_a.should == [
+      [0,0,0],
+      [0,1,1],
+      [1,0,2],
+      [1,1,3],
+      [1,2,10]
+    ]
+  end
 end
 
 describe Okura::Loader::MeCab do

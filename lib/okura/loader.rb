@@ -1,4 +1,6 @@
 require 'okura'
+require 'okura/parser'
+
 module Okura
   module Loader
     # MeCab形式のプレインテキスト用
@@ -44,10 +46,9 @@ module Okura
       public
 
       def load_matrix io
-        rsize,lsize=io.readline.split(/\s/).map(&:to_i)
-        mat=Matrix.new rsize,lsize
-        io.each_line{|line|
-          rid,lid,cost=line.split(/\s/).map(&:to_i)
+        parser=Okura::Parser::Matrix.new io
+        mat=Matrix.new parser.rid_size,parser.lid_size
+        parser.each{|rid,lid,cost|
           mat.set(rid,lid,cost)
         }
         mat

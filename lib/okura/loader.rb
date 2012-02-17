@@ -55,8 +55,8 @@ module Okura
       end
       def load_words io,lefts,rights
         wd=Okura::WordDic::Naive.new
-        io.each_line {|line|
-          surface,lid_s,rid_s,cost_s,*rest=line.split(/,/,5)
+        parser=Okura::Parser::Word.new io
+        parser.each{|surface,lid,rid,cost|
           lid,rid,cost=[lid_s,rid_s,cost_s].map(&:to_i)
           wd.define Word.new(surface,lefts.from_id(lid),rights.from_id(rid),cost)
         }

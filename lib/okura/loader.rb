@@ -57,7 +57,6 @@ module Okura
         wd=Okura::WordDic::Naive.new
         parser=Okura::Parser::Word.new io
         parser.each{|surface,lid,rid,cost|
-          lid,rid,cost=[lid_s,rid_s,cost_s].map(&:to_i)
           wd.define Word.new(surface,lefts.from_id(lid),rights.from_id(rid),cost)
         }
         wd

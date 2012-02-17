@@ -40,6 +40,19 @@ describe Okura::Parser::Matrix do
   end
 end
 
+describe Okura::Parser::Word do
+  it 'MeCab形式の単語ファイルを読める' do
+    parser=Okura::Parser::Word.new as_io(<<-EOS)
+あがなう,854,458,6636,動詞,自立,*,*,五段・ワ行促音便,基本形,あがなう,アガナウ,アガナウ,あがなう/購う/贖う,
+あがめる,645,546,1234,動詞,自立,*,*,一段,基本形,あがめる,アガメル,アガメル,あがめる/崇める,
+    EOS
+    parser.each.to_a.map{|x|x[0..3]}.should == [
+      ['あがなう',854,458,6636],
+      ['あがめる',645,546,1234]
+    ]
+  end
+end
+
 describe Okura::Loader::MeCab do
   subject { Okura::Loader::MeCab.new }
   describe '#load_matrix' do

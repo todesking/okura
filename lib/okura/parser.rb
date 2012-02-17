@@ -22,5 +22,26 @@ module Okura
       end
 
     end
+
+    class Word
+
+      include Enumerable
+
+      def initialize io
+        @io=io
+      end
+
+      def each &b
+        return Enumerator.new(self) unless b
+
+        ti=:to_i
+        ts=:to_s
+        @io.each_line {|line|
+          cols=line.split /,/
+          b.call cols[0..3].zip([ts,ti,ti,ti]).map{|v,f|f.to_proc.call v}
+        }
+      end
+
+    end
   end
 end

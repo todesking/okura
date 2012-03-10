@@ -57,6 +57,15 @@ module Okura
       end
     end
 
+    class UnkDic
+      include Base
+      def parse line
+        type_s,lid_s,rid_s,cost_s,additional=line.split(/,/,5)
+        lid,rid,cost=[lid_s,rid_s,cost_s].map(&:to_i)
+        [type_s,lid,rid,cost]
+      end
+    end
+
     class CharType
       def initialize
         @callbacks={

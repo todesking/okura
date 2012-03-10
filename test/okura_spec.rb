@@ -100,6 +100,19 @@ KATAKANA       1 0 2
   end
 end
 
+describe Okura::Parser::UnkDic do
+  it '未知語の定義を読める' do
+    parser=Okura::Parser::UnkDic.new as_io(<<-EOS)
+A,5,6,3274,記号,一般,*,*,*,*,*
+Z,9,10,5244,記号,空白,*,*,*,*,*
+    EOS
+    parser.to_a.should == [
+      ['A',5,6,3274],
+      ['Z',9,10,5244]
+    ]
+  end
+end
+
 describe Okura::Loader::MeCab do
   subject { Okura::Loader::MeCab.new }
   describe '#load_matrix' do

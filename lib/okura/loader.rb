@@ -91,10 +91,9 @@ module Okura
       end
       def load_unk_dic io,char_types,lefts,rights
         udic=UnkDic.new char_types
-        io.each_line {|line|
-          type_s,lid_s,rid_s,cost_s,additional=line.split(/,/,5)
-          lid,rid,cost=[lid_s,rid_s,cost_s].map(&:to_i)
-          udic.define type_s,lefts.from_id(lid),rights.from_id(rid),cost
+        parser=Okura::Parser::UnkDic.new io
+        parser.each{|type,lid,rid,cost|
+          udic.define type,lefts.from_id(lid),rights.from_id(rid),cost
         }
         udic
       end

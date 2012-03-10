@@ -72,32 +72,21 @@ module Okura
       end
       def load_char_types io
         cts=CharTypes.new
-        io.each_line{|line|
-          cols=line.gsub(/\s*#.*$/,'').split(/\s+/)
-          next if cols.empty?
-
-          case cols[0]
-          when /^0x([0-9a-fA-F]{4})(?:\.\.0x([0-9a-fA-F]{4}))?$/
-            # mapping
-            parse_error line unless cols.size >= 2
-            type=cts.named cols[1]
-            compat_types=cols[2..-1].map{|name|cts.named name}
-            if $2
-              ($1.to_i(16)..$2.to_i(16)).each{|c|
-                cts.define_map(c,type,compat_types)
-              }
-            else
-              cts.define_map($1.to_i(16),type,compat_types)
-            end
-          when /^\w+$/
-            parse_error line unless cols.size == 4
-            # typedef
-            cts.define_type cols[0],(cols[1]=='1'),(cols[2]=='1'),Integer(cols[3])
-          else
-            # error
-            parse_error line
-          end
+        parser=Okura::Parser::CharType.new
+        parser.on_chartype_def {|name,invoke,group,length|
+          cts.define_type name,invoke,group,length
         }
+        parser.on_mapping_single {|code,type,ctypes|
+          cts.define_map(code,cts.named(type),ctypes.map{|ct|cts.named ct})
+        }
+        parser.on_mapping_range {|from,to,type,ctypes|
+          (from..to).each{|code|
+            cts.define_map(code,cts.named(type),ctypes.map{|ct|ctypes.named ct})
+          }
+        }
+
+        parser.parse_all io
+
         cts
       end
       def load_unk_dic io,char_types,lefts,rights

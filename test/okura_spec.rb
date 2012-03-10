@@ -51,6 +51,53 @@ describe Okura::Parser::Word do
       ['あがめる',645,546,1234]
     ]
   end
+  it 'ダブルクオートでエスケープされた単語定義も扱える'
+end
+
+describe Okura::Parser::Feature do
+  it 'MeCab形式の品詞ファイルを読める' do
+    parser=Okura::Parser::Feature.new as_io(<<-EOS)
+0 BOS/EOS,*,*,*,*,*,BOS/EOS
+1 その他,間投,*,*,*,*,*
+    EOS
+    parser.each.to_a.should == [
+      [0,'BOS/EOS,*,*,*,*,*,BOS/EOS'],
+      [1,'その他,間投,*,*,*,*,*']
+    ]
+  end
+end
+
+describe  Okura::Parser::CharType do
+  it 'MeCab形式の文字種定義ファイルを読める' do
+    parser=Okura::Parser::CharType.new
+    h={single:[],range:[],type:[]}
+    parser.on_mapping_single {|code,type,ctypes| h[:single]<<[code,type,ctypes]}
+    parser.on_mapping_range{|from,to,type,ctypes| h[:range]<<[from,to,type,ctypes]}
+    parser.on_chartype_def{|name,invoke,group,length| h[:type]<<[name,invoke,group,length]}
+
+    parser.parse_all as_io(<<-EOS)
+DEFAULT        0 1 0  # DEFAULT is a mandatory category!
+KATAKANA       1 0 2
+
+0x000D SPACE  # CR
+0x003A..0x0040 SYMBOL
+# KANJI
+0x5146 KANJINUMERIC KANJI
+    EOS
+    require 'pp'; pp h
+
+    h[:single].should == [
+      [0x000D, 'SPACE', []],
+      [0x5146, 'KANJINUMERIC', %w(KANJI)]
+    ]
+    h[:range].should == [
+      [0x003A, 0x0040, 'SYMBOL', []]
+    ]
+    h[:type].should == [
+      ['DEFAULT', false, true, 0],
+      ['KATAKANA', true, false, 2]
+    ]
+  end
 end
 
 describe Okura::Loader::MeCab do

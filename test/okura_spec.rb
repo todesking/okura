@@ -84,7 +84,6 @@ KATAKANA       1 0 2
 # KANJI
 0x5146 KANJINUMERIC KANJI
     EOS
-    require 'pp'; pp h
 
     h[:single].should == [
       [0x000D, 'SPACE', []],

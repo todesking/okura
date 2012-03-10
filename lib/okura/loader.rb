@@ -63,9 +63,8 @@ module Okura
       end
       def load_features io
         fs=Features.new
-        io.each_line{|line|
-          id_s,name=line.strip.split(/ /,2)
-          id=id_s.to_i
+        parser=Okura::Parser::Feature.new io
+        parser.each{|id,name|
           fs.add id,name
         }
         fs
@@ -96,10 +95,6 @@ module Okura
           udic.define type,lefts.from_id(lid),rights.from_id(rid),cost
         }
         udic
-      end
-      private
-      def parse_error line
-        raise "Illegal format: #{line}"
       end
     end
     class Marshal

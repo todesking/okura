@@ -332,6 +332,16 @@ module Okura
           da=DAData.new @root
           DoubleArray.new @words,da.base,da.check
         end
+        # -> [ Marshal [Word], [Integer], [Integer] ]
+        def data_for_serialize
+          da=DAData.new @root
+          [@words,da.base,da.check]
+        end
+        # [ Marshal [Word], [Integer], [Integer] ] -> WordDic::DoubleArray
+        def self.build_from_serialized data
+          words,base,check=data
+          DoubleArray.new words,base,check
+        end
       end
     end
   end

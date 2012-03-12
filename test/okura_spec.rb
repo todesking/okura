@@ -228,9 +228,9 @@ describe 'Compile and load' do
     it 'シリアライズして復元できる'
   end
   shared_examples_for 'WordDic serializer' do
+    # subject : Serializer class
     it 'コンパイルして復元できる' do
-      format=Okura::Serializer::WordDic::Naive
-      serializer=format.new
+      serializer=subject.new
       features=Okura::Features.new
       features.add 854,f(854)
       features.add 458,f(458)
@@ -250,6 +250,11 @@ describe 'Compile and load' do
     end
   end
   describe Okura::Serializer::WordDic::Naive do
+    subject { Okura::Serializer::WordDic::Naive }
+    it_should_behave_like 'WordDic serializer'
+  end
+  describe Okura::Serializer::WordDic::DoubleArray do
+    subject { Okura::Serializer::WordDic::DoubleArray }
     it_should_behave_like 'WordDic serializer'
   end
 end

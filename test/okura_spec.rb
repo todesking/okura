@@ -225,7 +225,26 @@ end
 
 describe 'Compile and load' do
   describe Okura::Serializer::FormatInfo do
-    it 'シリアライズして復元できる'
+    it 'シリアライズして復元できる' do
+      info=Okura::Serializer::FormatInfo.new
+      info.word_dic=:Naive
+      info.features=:Marshal
+      info.char_types=:Marshal
+      info.unk_dic=:Marshal
+      info.matrix=:Marshal
+
+      out=StringIO.new
+      info.compile(out)
+      out.rewind
+
+      loaded=Okura::Serializer::FormatInfo.load(out)
+      loaded.word_dic.should == :Naive
+      loaded.features.should == :Marshal
+      loaded.char_types.should == :Marshal
+      loaded.unk_dic.should == :Marshal
+      loaded.matrix.should == :Marshal
+    end
+    it '設定に基づいて辞書をコンパイル/ロードできる'
   end
   shared_examples_for 'WordDic serializer' do
     # subject : Serializer class

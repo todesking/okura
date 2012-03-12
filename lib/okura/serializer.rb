@@ -1,7 +1,33 @@
+require 'yaml'
+
 module Okura
   module Serializer
     class FormatInfo
-      # todo
+      attr_accessor :word_dic
+      attr_accessor :unk_dic
+      attr_accessor :features
+      attr_accessor :char_types
+      attr_accessor :matrix
+
+      def compile io
+        YAML.dump({
+          word_dic: word_dic,
+          unk_dic: unk_dic,
+          features: features,
+          char_types: char_types,
+          matrix: matrix
+        },io)
+      end
+      def self.load io
+        data=YAML.load(io)
+        fi=FormatInfo.new
+        fi.word_dic=data[:word_dic]
+        fi.unk_dic=data[:unk_dic]
+        fi.features=data[:features]
+        fi.char_types=data[:char_types]
+        fi.matrix=data[:matrix]
+        fi
+      end
     end
     module WordDic
       class Naive

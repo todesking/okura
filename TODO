@@ -12,21 +12,26 @@
 [done] バイナリ形式の辞書ファイルを作れる
 [done] ライセンス決める
 [done] double array trieの採用
------- DAT, コンパイル及び復元
+[done] DAT, コンパイル及び復元
+[done] serialize: format-info
+------ serialize: features
+------ serialize: char types
+------ serialize: unk dic
+------ serialize: matrix
+------ 辞書のコンパイルとロードをformat-info使う方式に切り替え
+------ 辞書ロードのベンチマーク(MeCab,igo,igo-ruby)
+------ 解析のベンチマーク
+------ 整数の配列､Marshalと自力どっちが速いか検討
 ------ DAT,TAIL実装
 ------ UTF8以外の文字コードの辞書ソース読める
 ------ READMEをリッチテキスト化
 ------ READMEに使用例かく
 ------ MeCab 互換レイヤ(Okura::Compat)
 ------ WordDic構築時､不要なデータ捨てる
------- ロード時にフォーマット自動認識
 ------ 未知語の品詞を未知語にできる
------- 辞書ロードのベンチマーク
------- 解析のベンチマーク
 ------ 単語の付加情報対応
 ------ console: naist-dic以外にも対応
 ------ gomokuとかで使ってたはずの軽量辞書についてしらべる
------- igo-rubyとのベンチマーク
 ------ rubygems.orgにアップロ〜ド
 ------ MeCabとのベンチマーク
 ------ Ruby1.8での動作確認

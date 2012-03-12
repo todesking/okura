@@ -246,6 +246,21 @@ describe 'Compile and load' do
     end
     it '設定に基づいて辞書をコンパイル/ロードできる'
   end
+  describe Okura::Serializer::Features::Marshal do
+    it 'コンパイルして復元できる' do
+      serializer=Okura::Serializer::Features::Marshal.new
+      out=StringIO.new
+      serializer.compile(as_io(<<-EOS),out)
+0 BOS/EOS,*,*,*,*,*,BOS/EOS
+1 その他,間投,*,*,*,*,*
+      EOS
+      out.rewind
+
+      features=serializer.load(out)
+      features.from_id(0).text.should == 'BOS/EOS,*,*,*,*,*,BOS/EOS'
+      features.from_id(1).text.should == 'その他,間投,*,*,*,*,*'
+    end
+  end
   shared_examples_for 'WordDic serializer' do
     # subject : Serializer class
     it 'コンパイルして復元できる' do

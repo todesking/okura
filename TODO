@@ -14,7 +14,7 @@
 [done] double array trieの採用
 [done] DAT, コンパイル及び復元
 [done] serialize: format-info
------- serialize: features
+[done] serialize: features
 ------ serialize: char types
 ------ serialize: unk dic
 ------ serialize: matrix

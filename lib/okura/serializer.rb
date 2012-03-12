@@ -29,6 +29,21 @@ module Okura
         fi
       end
     end
+    module Features
+      class Marshal
+        def compile(input,output)
+          parser=Okura::Parser::Feature.new input
+          features=Okura::Features.new
+          parser.each{|id,text|
+            features.add id,text
+          }
+          ::Marshal.dump(features,output)
+        end
+        def load(io)
+          ::Marshal.load(io)
+        end
+      end
+    end
     module WordDic
       class Naive
         def compile(features,input,output)

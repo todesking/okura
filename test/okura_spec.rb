@@ -2,6 +2,7 @@
 require File.join(File.dirname(__FILE__),'..','lib','okura')
 require File.join(File.dirname(__FILE__),'..','lib','okura','loader')
 require File.join(File.dirname(__FILE__),'..','lib','okura','parser')
+require File.join(File.dirname(__FILE__),'..','lib','okura','serializer')
 
 def as_io str
   StringIO.new str
@@ -219,6 +220,37 @@ Z,9,9,5244,記号,空白,*,*,*,*,*
 
 	  unk.possible_words('AZ',0,false).should == [w('A',f(5),f(5),3274)]
 	end
+  end
+end
+
+describe 'Compile and load' do
+  describe Okura::Serializer::FormatInfo do
+    it 'シリアライズして復元できる'
+  end
+  shared_examples_for 'WordDic serializer' do
+    it 'コンパイルして復元できる' do
+      format=Okura::Serializer::WordDic::Naive
+      serializer=format.new
+      features=Okura::Features.new
+      features.add 854,f(854)
+      features.add 458,f(458)
+      features.add 645,f(645)
+      features.add 546,f(546)
+      out=StringIO.new
+      serializer.compile(features,as_io(<<-EOS),out)
+あがなう,854,458,6636,動詞,自立,*,*,五段・ワ行促音便,基本形,あがなう,アガナウ,アガナウ,あがなう/購う/贖う,
+あがめる,645,546,1234,動詞,自立,*,*,一段,基本形,あがめる,アガメル,アガメル,あがめる/崇める,
+      EOS
+      out.rewind
+      wd=serializer.load(out)
+
+      wd.possible_words('あがなう',0).should == [w('あがなう',f(854),f(458),6636)]
+      wd.possible_words('あがめる',0).should == [w('あがめる',f(645),f(546),1234)]
+      wd.possible_words('あがめる',1).should == []
+    end
+  end
+  describe Okura::Serializer::WordDic::Naive do
+    it_should_behave_like 'WordDic serializer'
   end
 end
 

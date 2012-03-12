@@ -113,9 +113,13 @@ module Okura
       raise unless left.respond_to? :text
       @surface,@left,@right,@cost=surface,left,right,cost
     end
+    # String
     attr_reader :surface
+    # Feature
     attr_reader :left
+    # Feature
     attr_reader :right
+    # Integer
     attr_reader :cost
     def == other
       return [surface,left,right,cost] ==
@@ -148,6 +152,7 @@ module Okura
     def initialize
       @map_id={}
     end
+    # Integer -> Feature
     def from_id id
       @map_id[id]
     end

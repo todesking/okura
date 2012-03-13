@@ -17,7 +17,7 @@
 [done] serialize: features
 [done] serialize: char types
 [done] serialize: unk dic
------- serialize: matrix
+[done] serialize: matrix
 ------ 辞書のコンパイルとロードをformat-info使う方式に切り替え
 ------ 辞書ロードのベンチマーク(MeCab,igo,igo-ruby)
 ------ 解析のベンチマーク

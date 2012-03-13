@@ -127,5 +127,20 @@ module Okura
         end
       end
     end
+    module Matrix
+      class Marshal
+        def compile(input,output)
+          parser=Okura::Parser::Matrix.new input
+          mat=Okura::Matrix.new parser.rid_size,parser.lid_size
+          parser.each{|rid,lid,cost|
+            mat.set(rid,lid,cost)
+          }
+          ::Marshal.dump(mat,output)
+        end
+        def load(io)
+          ::Marshal.load(io)
+        end
+      end
+    end
   end
 end

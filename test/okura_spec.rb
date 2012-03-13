@@ -340,6 +340,25 @@ Z,9,10,5244,記号,空白,*,*,*,*,*
       unk.word_templates_for('Z').first.cost.should == 5244
     end
   end
+  describe Okura::Serializer::Matrix::Marshal do
+    it 'コンパイルして復元できる' do
+      serializer=Okura::Serializer::Matrix::Marshal.new
+      out=StringIO.new
+      serializer.compile(as_io(<<-EOS),out)
+2 3
+0 0 0
+0 1 1
+1 0 2
+1 1 3
+1 2 10
+      EOS
+      out.rewind
+
+      mat=serializer.load(out)
+      mat.cost(0,0).should == 0
+      mat.cost(1,2).should == 10
+    end
+  end
 end
 
 describe Okura::Matrix do

@@ -1,4 +1,5 @@
 #-*- coding:utf-8
+require File.join(File.dirname(__FILE__),'spec_helper.rb')
 require File.join(File.dirname(__FILE__),'..','lib','okura')
 require File.join(File.dirname(__FILE__),'..','lib','okura','loader')
 require File.join(File.dirname(__FILE__),'..','lib','okura','parser')

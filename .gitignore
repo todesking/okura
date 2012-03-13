@@ -2,3 +2,5 @@
 .rvmrc
 Gemfile.lock
 coverage/
+coverage.vim
+.simplecov

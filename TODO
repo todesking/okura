@@ -15,7 +15,7 @@
 [done] DAT, コンパイル及び復元
 [done] serialize: format-info
 [done] serialize: features
------- serialize: char types
+[done] serialize: char types
 ------ serialize: unk dic
 ------ serialize: matrix
 ------ 辞書のコンパイルとロードをformat-info使う方式に切り替え

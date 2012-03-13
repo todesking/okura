@@ -86,5 +86,31 @@ module Okura
         end
       end
     end
+    module CharTypes
+      class Marshal
+        def compile(input,output)
+          cts=Okura::CharTypes.new
+
+          parser=Okura::Parser::CharType.new
+          parser.on_chartype_def{|name,invoke,group,length|
+            cts.define_type(name,invoke,group,length)
+          }
+          parser.on_mapping_single{|char,type,ctypes|
+            cts.define_map char,cts.named(type),ctypes.map{|ct|cts.named(ct)}
+          }
+          parser.on_mapping_range{|from,to,type,ctypes|
+            (from..to).each{|char|
+              cts.define_map char,cts.named(type),ctypes.map{|ct|cts.named(ct)}
+            }
+          }
+          parser.parse_all input
+
+          ::Marshal.dump(cts,output)
+        end
+        def load(io)
+          ::Marshal.load(io)
+        end
+      end
+    end
   end
 end

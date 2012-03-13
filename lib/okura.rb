@@ -396,7 +396,7 @@ module Okura
       compat_types.each{|ct|ct.add charcode}
     end
     def named name
-      @types[name]
+      @types[name] || (raise "Undefined char type: #{name}")
     end
     def default_type
       named 'DEFAULT'

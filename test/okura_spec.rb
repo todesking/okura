@@ -262,6 +262,31 @@ describe 'Compile and load' do
       features.from_id(1).text.should == 'その他,間投,*,*,*,*,*'
     end
   end
+  describe Okura::Serializer::CharTypes::Marshal do
+    it 'コンパイルして復元できる' do
+      serializer=Okura::Serializer::CharTypes::Marshal.new
+      out=StringIO.new
+      serializer.compile(as_io(<<-EOS),out)
+DEFAULT        0 1 0  # DEFAULT is a mandatory category!
+KATAKANA       1 0 2
+SPACE          1 0 2
+SYMBOL         1 1 3
+KANJINUMERIC   0 0 2
+KANJI          1 1 1
+
+0x000D SPACE  # CR
+0x003A..0x0040 SYMBOL
+# KANJI
+0x5146 KANJINUMERIC KANJI
+      EOS
+      out.rewind
+
+      cts=serializer.load(out)
+      cts.type_for(0x000D).name.should == 'SPACE'
+      cts.type_for(0x003F).name.should == 'SYMBOL'
+      cts.named('KANJI')
+    end
+  end
   shared_examples_for 'WordDic serializer' do
     # subject : Serializer class
     it 'コンパイルして復元できる' do

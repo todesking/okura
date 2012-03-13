@@ -112,5 +112,20 @@ module Okura
         end
       end
     end
+    module UnkDic
+      class Marshal
+        def compile(char_types,features,input,output)
+          unk=Okura::UnkDic.new char_types
+          parser=Okura::Parser::UnkDic.new input
+          parser.each{|type_name,lid,rid,cost|
+            unk.define type_name,features.from_id(lid),features.from_id(rid),cost
+          }
+          ::Marshal.dump(unk,output)
+        end
+        def load(io)
+          ::Marshal.load(io)
+        end
+      end
+    end
   end
 end

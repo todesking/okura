@@ -16,7 +16,7 @@
 [done] serialize: format-info
 [done] serialize: features
 [done] serialize: char types
------- serialize: unk dic
+[done] serialize: unk dic
 ------ serialize: matrix
 ------ 辞書のコンパイルとロードをformat-info使う方式に切り替え
 ------ 辞書ロードのベンチマーク(MeCab,igo,igo-ruby)

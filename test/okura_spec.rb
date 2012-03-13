@@ -315,6 +315,31 @@ KANJI          1 1 1
     subject { Okura::Serializer::WordDic::DoubleArray }
     it_should_behave_like 'WordDic serializer'
   end
+  describe Okura::Serializer::UnkDic::Marshal do
+    it 'コンパイルして復元できる' do
+      serializer=Okura::Serializer::UnkDic::Marshal.new
+      cts=Okura::CharTypes.new
+      cts.define_type 'A',true,false,10
+      cts.define_type 'Z',false,true,0
+      cts.define_map 0x0001,cts.named('A'),[]
+      cts.define_map 0x0002,cts.named('Z'),[]
+      features=Okura::Features.new
+      features.add 5,'F5'
+      features.add 6,'F6'
+      features.add 9,'F9'
+      features.add 10,'F10'
+      out=StringIO.new
+      serializer.compile(cts,features,as_io(<<-EOS),out)
+A,5,6,3274,記号,一般,*,*,*,*,*
+Z,9,10,5244,記号,空白,*,*,*,*,*
+      EOS
+      out.rewind
+
+      unk=serializer.load(out)
+      unk.word_templates_for('A').first.cost.should == 3274
+      unk.word_templates_for('Z').first.cost.should == 5244
+    end
+  end
 end
 
 describe Okura::Matrix do

@@ -341,6 +341,7 @@ module Okura
     end
   end
   class UnkDic
+    # CharTypes -> Features ->
     def initialize char_types
       @char_types=char_types
       # CharType.name => [Word]
@@ -371,9 +372,13 @@ module Okura
       }
     end
     public
+    # String -> Feature -> Feature -> Integer ->
     def define type_name,left,right,cost
       type=@char_types.named type_name
       (@templates[type_name]||=[]).push Word.new '',left,right,cost
+    end
+    def word_templates_for type_name
+      @templates[type_name].dup
     end
   end
   class CharTypes

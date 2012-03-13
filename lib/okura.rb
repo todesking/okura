@@ -1,11 +1,6 @@
 # coding: utf-8
 require 'csv'
 
-def todo
-  $stderr.puts "TODO at #{caller[1]}"
-end
-
-
 module Okura
   class Tagger
     def initialize dic,mat

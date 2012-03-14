@@ -2,13 +2,57 @@ require 'yaml'
 
 module Okura
   module Serializer
+    # 辞書ファイルのコンパイル形式を表現し､コンパイルとロードの制御を担当する
     class FormatInfo
+      def initialize
+        @word_dic=:Naive
+        @unk_dic=:Marshal
+        @features=:Marshal
+        @char_types=:Marshal
+        @matrix=:Marshal
+      end
       attr_accessor :word_dic
       attr_accessor :unk_dic
       attr_accessor :features
       attr_accessor :char_types
       attr_accessor :matrix
 
+      # 指定されたディレクトリにあるソースをコンパイルする
+      def compile_dict src_dir,bin_dir
+        open_dest(bin_dir,'format-info'){|dest| self.compile dest}
+        open_src(src_dir,'left-id.def'){|src|
+          open_dest(bin_dir,'left-id.bin'){|dest|
+            serializer_for('Features',features).compile(src,dest)
+          }
+        }
+        Dir.chdir(src_dir){
+          serializer=serializer_for('WordDic',word_dic)
+          Dir.glob('*.csv').each{|word_src|
+            open_src(src_dir,word_src){|src|
+            }
+          }
+        }
+      end
+      # 指定されたディレクトリにあるコンパイル済み辞書をロードし､Taggerを作成する
+      def self.create_tagger bin_dir
+        format_info=File.open(File.join(bin_dir,'format-info')){|f| self.load f }
+        format_info.create_tagger bin_dir
+      end
+      def create_tagger bin_dir
+        features_l=open_bin(bin_dir,'left-id.bin'){|bin|
+          serializer_for('Features',features).load(bin)
+        }
+        wd=open_bin(bin_dir,'word_dic.bin'){|f|
+          serializer_for('WordDic',word_dic).load(f)
+        }
+        ud=open_bin(bin_dir,'unk_dic.bin'){|f|
+          serializer_for('UnkDic',unk_dic).load(f)
+        }
+        dic=Okura::Dic.new wd,ud
+        tagger=Okura::Tagger.new dic,mat
+        tagger
+      end
+      # このFormatInfoオブジェクトをシリアライズする
       def compile io
         YAML.dump({
           word_dic: word_dic,
@@ -18,6 +62,7 @@ module Okura
           matrix: matrix
         },io)
       end
+      # シリアライズされたFormatInfoオブジェクトを復元する
       def self.load io
         data=YAML.load(io)
         fi=FormatInfo.new
@@ -27,6 +72,21 @@ module Okura
         fi.char_types=data[:char_types]
         fi.matrix=data[:matrix]
         fi
+      end
+      private
+      def open_src dir,filename,&block
+        File.open(File.join(dir,filename),'r',&block)
+      end
+      def open_dest dir,filename,&block
+        File.open(File.join(dir,filename),'w',&block)
+      end
+      def open_bin dir,filename,&block
+        File.open(File.join(dir,filename),'r',&block)
+      end
+      def serializer_for data_type_name,format_type_name
+        data_type=Okura::Serializer.const_get data_type_name
+        format_type=data_type.const_get format_type_name
+        format_type.new
       end
     end
     module Features
@@ -46,36 +106,51 @@ module Okura
     end
     module WordDic
       class Naive
-        def compile(features,input,output)
-          parser=Okura::Parser::Word.new(input)
+        def compile(features,inputs,output)
           dic=Okura::WordDic::Naive.new
-          parser.each{|surface,lid,rid,cost|
-            word=Okura::Word.new(
-              surface,
-              features.from_id(lid),
-              features.from_id(rid),
-              cost
-            )
-            dic.define word
+          each_input(inputs){|input|
+            parser=Okura::Parser::Word.new(input)
+            parser.each{|surface,lid,rid,cost|
+              word=Okura::Word.new(
+                surface,
+                features.from_id(lid),
+                features.from_id(rid),
+                cost
+              )
+              dic.define word
+            }
           }
           Marshal.dump(dic,output)
         end
         def load(io)
           Marshal.load(io)
         end
+        private 
+        def each_input inputs,&block
+          inputs.each{|input|
+            case input
+            when String
+              File.open(input,'r',&block)
+            else
+              block.call input
+            end
+          }
+        end
       end
       class DoubleArray
-        def compile(features,input,output)
-          parser=Okura::Parser::Word.new(input)
+        def compile(features,inputs,output)
           dic=Okura::WordDic::DoubleArray::Builder.new
-          parser.each{|surface,lid,rid,cost|
-            word=Okura::Word.new(
-              surface,
-              features.from_id(lid),
-              features.from_id(rid),
-              cost
-            )
-            dic.define word
+          each_input(inputs){|input|
+            parser=Okura::Parser::Word.new(input)
+            parser.each{|surface,lid,rid,cost|
+              word=Okura::Word.new(
+                surface,
+                features.from_id(lid),
+                features.from_id(rid),
+                cost
+              )
+              dic.define word
+            }
           }
           data=dic.data_for_serialize
           Marshal.dump(data,output)
@@ -83,6 +158,17 @@ module Okura
         def load(io)
           data=Marshal.load(io)
           Okura::WordDic::DoubleArray::Builder.build_from_serialized data
+        end
+        private 
+        def each_input inputs,&block
+          inputs.each{|input|
+            case input
+            when String
+              File.open(input,'r',&block)
+            else
+              block.call input
+            end
+          }
         end
       end
     end

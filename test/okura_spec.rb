@@ -5,6 +5,22 @@ require File.join(File.dirname(__FILE__),'..','lib','okura','loader')
 require File.join(File.dirname(__FILE__),'..','lib','okura','parser')
 require File.join(File.dirname(__FILE__),'..','lib','okura','serializer')
 
+require 'tmpdir'
+
+def with_dict_dir &block
+  Dir.mktmpdir {|src_dir|
+    Dir.mktmpdir {|bin_dir|
+      yield src_dir,bin_dir
+    }
+  }
+end
+
+def set_content(dir,filename,content)
+  File.open(File.join(dir,filename),'w'){|file|
+    file.write content
+  }
+end
+
 def as_io str
   StringIO.new str
 end
@@ -243,7 +259,49 @@ describe 'Compile and load' do
       loaded.unk_dic.should == :Marshal
       loaded.matrix.should == :Marshal
     end
-    it '設定に基づいて辞書をコンパイル/ロードできる'
+    it '設定に基づいて辞書をコンパイル/ロードできる' do
+      pending
+      with_dict_dir{|src_dir,bin_dir|
+        set_content(src_dir,'w1.csv',<<-EOS)
+w1,1,2,1000,
+        EOS
+        set_content(src_dir,'w2.csv',<<-EOS)
+w2,5,6,2000,
+w3,9,10,3000,
+        EOS
+        set_content(src_dir,'left-id.def',<<-EOS)
+1 F1
+5 F5
+9 F9
+        EOS
+        set_content(src_dir,'right-id.def',<<-EOS)
+2 F2
+6 F6
+10 F10
+        EOS
+        set_content(src_dir,'char.def',<<-EOS)
+A 0 0 1
+Z 1 1 3
+        EOS
+        set_content(src_dir,'unk.def',<<-EOS)
+A,5,6,3274,記号,一般,*,*,*,*,*
+Z,9,10,5244,記号,空白,*,*,*,*,*
+        EOS
+        set_content(src_dir,'matrix.def',<<-EOS)
+2 3
+0 0 10
+0 1 5
+        EOS
+        fi=Okura::Serializer::FormatInfo.new
+        fi.compile_dict(src_dir,bin_dir)
+
+        tagger=Okura::Serializer::FormatInfo.create_tagger(bin_dir)
+
+        tagger.dic.unk_dic.rule_size.should == 2
+        tagger.dic.word_dic.word_size.should == 3
+        tagger.matrix.cost(0,1).should == 5
+      }
+    end
   end
   describe Okura::Serializer::Features::Marshal do
     it 'コンパイルして復元できる' do
@@ -295,7 +353,7 @@ KANJI          1 1 1
       features.add 645,f(645)
       features.add 546,f(546)
       out=StringIO.new
-      serializer.compile(features,as_io(<<-EOS),out)
+      serializer.compile(features,[as_io(<<-EOS)],out)
 あがなう,854,458,6636,動詞,自立,*,*,五段・ワ行促音便,基本形,あがなう,アガナウ,アガナウ,あがなう/購う/贖う,
 あがめる,645,546,1234,動詞,自立,*,*,一段,基本形,あがめる,アガメル,アガメル,あがめる/崇める,
       EOS

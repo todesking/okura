@@ -7,6 +7,7 @@ module Okura
       @dic,@mat=dic,mat
     end
     attr_reader :dic
+    attr_reader :mat
     # -> [String]
     def wakati str,mat
       mincost_path=parse(str).mincost_path
@@ -163,6 +164,8 @@ module Okura
     def initialize word_dic,unk_dic
       @word_dic,@unk_dic=word_dic,unk_dic
     end
+    attr_reader :word_dic
+    attr_reader :unk_dic
     # -> [Word]
     def possible_words str,i
       ret=@word_dic.possible_words str,i

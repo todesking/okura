@@ -1,4 +1,6 @@
 require 'yaml'
+require 'okura'
+require 'okura/parser'
 
 module Okura
   module Serializer

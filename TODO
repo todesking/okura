@@ -19,7 +19,7 @@
 [done] serialize: unk dic
 [done] serialize: matrix
 [done] 辞書のコンパイルとロードをformat-info使う方式に切り替え
------- コマンドから辞書のコンパイルが出来る
+[done] コマンドから辞書のコンパイルが出来る
 ------ feature left,rightを区別する
 ------ 複数の同一表記単語を正しく扱う
 ------ 辞書ロードのベンチマーク(MeCab,igo,igo-ruby)

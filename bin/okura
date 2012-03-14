@@ -12,8 +12,11 @@ commands={
   },
   :compile => lambda {|args|
 	raise IllegalOption.new('Usage: compile dict_dir dest_dir') unless args.length==2
-	require 'okura/compiler'
-	Okura::Compiler.compile(args[0],args[1])
+	require 'okura/serializer'
+    dict_dir=args[0]
+    bin_dir=args[1]
+    format_info=Okura::Serializer::FormatInfo.new
+    format_info.compile_dict(dict_dir,bin_dir)
   },
   :help => lambda {|args|
 	puts <<-EOS

@@ -37,3 +37,5 @@
 ------ Ruby1.8での動作確認
 ------ UTF8以外にも対応
 ------ BOS/EOSのIDを可変にできる
+------ matrixがsymmetricなとき圧縮する
+------ feature idがsymmetricなときWordを圧縮する

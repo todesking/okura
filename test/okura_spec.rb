@@ -1,7 +1,6 @@
 #-*- coding:utf-8
 require File.join(File.dirname(__FILE__),'spec_helper.rb')
 require File.join(File.dirname(__FILE__),'..','lib','okura')
-require File.join(File.dirname(__FILE__),'..','lib','okura','loader')
 require File.join(File.dirname(__FILE__),'..','lib','okura','parser')
 require File.join(File.dirname(__FILE__),'..','lib','okura','serializer')
 
@@ -128,116 +127,6 @@ Z,9,10,5244,記号,空白,*,*,*,*,*
   end
 end
 
-describe Okura::Loader::MeCab do
-  subject { Okura::Loader::MeCab.new }
-  describe '#load_matrix' do
-    describe 'left=right,マトリクスの全データがあるとき' do
-      it 'インスタンスを構築できる' do
-        m=subject.load_matrix as_io(<<-EOS)
-2 2
-0 0 0
-0 1 1
-1 0 2
-1 1 3
-        EOS
-        m.rsize.should == 2
-        m.lsize.should == 2
-      end
-      # TODO: エラー処理とかその他のパターン
-    end
-  end
-  describe '#load_words' do
-    it 'インスタンスを構築できる' do
-	  fs=Okura::Features.new
-	  fs.add 854,'F1'
-	  fs.add 645,'F2'
-      wd=subject.load_words(<<-EOS,fs,fs)
-あがなう,854,854,6636,動詞,自立,*,*,五段・ワ行促音便,基本形,あがなう,アガナウ,アガナウ,あがなう/購う/贖う,
-あがめる,645,645,6636,動詞,自立,*,*,一段,基本形,あがめる,アガメル,アガメル,あがめる/崇める,
-      EOS
-      wd.size.should == 2
-    end
-  end
-  describe '#load_features' do
-    it 'インスタンスを構築できる' do
-      fs=subject.load_features(<<-EOS)
-0 BOS/EOS,*,*,*,*,*,BOS/EOS
-1 その他,間投,*,*,*,*,*
-2 フィラー,*,*,*,*,*,*
-3 感動詞,*,*,*,*,*,*
-4 記号,アルファベット,*,*,*,*,*
-      EOS
-      fs.size.should == 5
-      fs.from_id(0).id.should == 0
-      fs.from_id(0).text.should == 'BOS/EOS,*,*,*,*,*,BOS/EOS'
-    end
-  end
-  describe '#load_char_types' do
-	it 'インスタンスを構築できる' do
-	  cts=subject.load_char_types(<<-EOS)
-DEFAULT     0 1 0
-TYPE1       1 0 0
-TYPE2 0 1 0
-TYPE3 0 1 3
-
-# comment
-
-0x0021 TYPE1
-0x0022 TYPE2 # comment
-0x0023..0x0040 TYPE3
-0x0099 TYPE1 TYPE2 # 互換カテゴリ
-0xABCd TYPE1 DEFAULT
-	  EOS
-
-	  cts.type_for(0x21).name.should == 'TYPE1'
-	  cts.type_for(0x22).name.should == 'TYPE2'
-	  cts.type_for(0x23).name.should == 'TYPE3'
-	  cts.type_for(0x40).name.should == 'TYPE3'
-	  cts.type_for(0x41).name.should == 'DEFAULT'
-	  cts.type_for(0x99).name.should == 'TYPE1'
-
-	  t1,t2,t3=cts.named('TYPE1'), cts.named('TYPE2'), cts.named('TYPE3')
-
-	  t1.name.should == 'TYPE1'
-
-	  t1.invoke?.should be_true
-	  t2.invoke?.should be_false
-
-	  t1.group?.should be_false
-	  t2.group?.should be_true
-
-	  t2.length.should == 0
-	  t3.length.should == 3
-
-	  t1.should be_accept(0x21)
-	  t1.should_not be_accept(0x22)
-	  t2.should be_accept(0x22)
-
-	  t1.should be_accept(0x99)
-	end
-  end
-  describe '#load_from_io' do
-	it 'インスタンスを構築できる' do
-	  cts=Okura::CharTypes.new
-	  cts.define_type 'A',true,true,10
-	  cts.define_type 'Z',true,true,10
-	  cts.define_map 'A'.ord, cts.named('A'), []
-	  cts.define_map 'Z'.ord, cts.named('Z'), []
-
-	  fs=Okura::Features.new
-	  fs.add 5,'hoge'
-	  fs.add 9,'fuga'
-
-	  unk=subject.load_unk_dic(<<-EOS,cts,fs,fs)
-A,5,5,3274,記号,一般,*,*,*,*,*
-Z,9,9,5244,記号,空白,*,*,*,*,*
-	  EOS
-
-	  unk.possible_words('AZ',0,false).should == [w('A',f(5),f(5),3274)]
-	end
-  end
-end
-
 describe 'Compile and load' do
   describe Okura::Serializer::FormatInfo do
     it 'シリアライズして復元できる' do
@@ -334,24 +223,48 @@ Z,9,10,5244,記号,空白,*,*,*,*,*
       serializer=Okura::Serializer::CharTypes::Marshal.new
       out=StringIO.new
       serializer.compile(as_io(<<-EOS),out)
-DEFAULT        0 1 0  # DEFAULT is a mandatory category!
-KATAKANA       1 0 2
-SPACE          1 0 2
-SYMBOL         1 1 3
-KANJINUMERIC   0 0 2
-KANJI          1 1 1
+DEFAULT 0 1 0  # DEFAULT is a mandatory category!
+TYPE1   1 0 0
+TYPE2   0 1 0
+TYPE3   0 1 3
 
-0x000D SPACE  # CR
-0x003A..0x0040 SYMBOL
-# KANJI
-0x5146 KANJINUMERIC KANJI
+# comment
+
+0x0021 TYPE1
+0x0022 TYPE2 # comment
+0x0023..0x0040 TYPE3
+0x0099 TYPE1 TYPE2 # 互換カテゴリ
+0xABCd TYPE1 DEFAULT
       EOS
       out.rewind
 
       cts=serializer.load(out)
-      cts.type_for(0x000D).name.should == 'SPACE'
-      cts.type_for(0x003F).name.should == 'SYMBOL'
-      cts.named('KANJI')
+
+	  cts.type_for(0x21).name.should == 'TYPE1'
+	  cts.type_for(0x22).name.should == 'TYPE2'
+	  cts.type_for(0x23).name.should == 'TYPE3'
+	  cts.type_for(0x40).name.should == 'TYPE3'
+	  cts.type_for(0x41).name.should == 'DEFAULT'
+	  cts.type_for(0x99).name.should == 'TYPE1'
+
+	  t1,t2,t3=cts.named('TYPE1'), cts.named('TYPE2'), cts.named('TYPE3')
+
+	  t1.name.should == 'TYPE1'
+
+	  t1.invoke?.should be_true
+	  t2.invoke?.should be_false
+
+	  t1.group?.should be_false
+	  t2.group?.should be_true
+
+	  t2.length.should == 0
+	  t3.length.should == 3
+
+	  t1.should be_accept(0x21)
+	  t1.should_not be_accept(0x22)
+	  t2.should be_accept(0x22)
+
+	  t1.should be_accept(0x99)
     end
   end
   shared_examples_for 'WordDic serializer' do
@@ -364,10 +277,11 @@ KANJI          1 1 1
       features.add 645,f(645)
       features.add 546,f(546)
       out=StringIO.new
-      serializer.compile(features,[as_io(<<-EOS)],out)
+      src=<<-EOS
 あがなう,854,458,6636,動詞,自立,*,*,五段・ワ行促音便,基本形,あがなう,アガナウ,アガナウ,あがなう/購う/贖う,
 あがめる,645,546,1234,動詞,自立,*,*,一段,基本形,あがめる,アガメル,アガメル,あがめる/崇める,
       EOS
+      serializer.compile(features,[as_io(src)],out)
       out.rewind
       wd=serializer.load(out)
 
@@ -433,13 +347,12 @@ end
 describe Okura::Matrix do
   describe '#cost' do
     it '渡された二つのFeature idを元にコストを返せる' do
-      m=Okura::Loader::MeCab.new.load_matrix as_io(<<-EOS)
-2 2
-0 0 0
-0 1 1
-1 0 2
-1 1 3
-      EOS
+      m=Okura::Matrix.new 2,2
+      m.set(0,0,0)
+      m.set(0,1,1)
+      m.set(1,0,2)
+      m.set(1,1,3)
+
       m.cost(1,1).should == 3
     end
   end

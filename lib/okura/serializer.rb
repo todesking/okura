@@ -20,16 +20,34 @@ module Okura
       # 指定されたディレクトリにあるソースをコンパイルする
       def compile_dict src_dir,bin_dir
         open_dest(bin_dir,'format-info'){|dest| self.compile dest}
-        open_src(src_dir,'left-id.def'){|src|
+        features_l=open_src(src_dir,'left-id.def'){|src|
           open_dest(bin_dir,'left-id.bin'){|dest|
             serializer_for('Features',features).compile(src,dest)
           }
         }
-        Dir.chdir(src_dir){
-          serializer=serializer_for('WordDic',word_dic)
-          Dir.glob('*.csv').each{|word_src|
-            open_src(src_dir,word_src){|src|
-            }
+
+        word_src_files=
+          Dir.chdir(src_dir){ Dir.glob('*.csv') }.
+          map{|file|File.join(src_dir,file)}
+        open_dest(bin_dir,'word_dic.bin'){|dest|
+          serializer_for('WordDic',word_dic).compile(features_l,word_src_files,dest)
+        }
+
+        char_types=open_src(src_dir,'char.def'){|src|
+          open_dest(bin_dir,'char_types.bin'){|dest|
+            serializer_for('CharTypes',@char_types).compile(src,dest)
+          }
+        }
+
+        open_src(src_dir,'unk.def'){|src|
+          open_dest(bin_dir,'unk_dic.bin'){|dest|
+            serializer_for('UnkDic',unk_dic).compile(char_types,features_l,src,dest)
+          }
+        }
+
+        open_src(src_dir,'matrix.def'){|src|
+          open_dest(bin_dir,'matrix.bin'){|dest|
+            serializer_for('Matrix',matrix).compile(src,dest)
           }
         }
       end
@@ -47,6 +65,9 @@ module Okura
         }
         ud=open_bin(bin_dir,'unk_dic.bin'){|f|
           serializer_for('UnkDic',unk_dic).load(f)
+        }
+        mat=open_bin(bin_dir,'matrix.bin'){|f|
+          serializer_for('Matrix',matrix).load(f)
         }
         dic=Okura::Dic.new wd,ud
         tagger=Okura::Tagger.new dic,mat
@@ -98,6 +119,7 @@ module Okura
             features.add id,text
           }
           ::Marshal.dump(features,output)
+          features
         end
         def load(io)
           ::Marshal.load(io)
@@ -192,6 +214,7 @@ module Okura
           parser.parse_all input
 
           ::Marshal.dump(cts,output)
+          cts
         end
         def load(io)
           ::Marshal.load(io)

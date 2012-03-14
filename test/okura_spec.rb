@@ -260,7 +260,6 @@ describe 'Compile and load' do
       loaded.matrix.should == :Marshal
     end
     it '設定に基づいて辞書をコンパイル/ロードできる' do
-      pending
       with_dict_dir{|src_dir,bin_dir|
         set_content(src_dir,'w1.csv',<<-EOS)
 w1,1,2,1000,
@@ -292,6 +291,7 @@ Z,9,10,5244,記号,空白,*,*,*,*,*
 0 0 10
 0 1 5
         EOS
+
         fi=Okura::Serializer::FormatInfo.new
         fi.compile_dict(src_dir,bin_dir)
 
@@ -299,7 +299,7 @@ Z,9,10,5244,記号,空白,*,*,*,*,*
 
         tagger.dic.unk_dic.rule_size.should == 2
         tagger.dic.word_dic.word_size.should == 3
-        tagger.matrix.cost(0,1).should == 5
+        tagger.mat.cost(0,1).should == 5
       }
     end
   end
@@ -441,6 +441,13 @@ shared_examples_for 'WordDic' do
   end
 
   describe '#possible_words' do
+    it '登録された単語のサイズを取得できる' do
+      subject.build.word_size.should == 0
+      subject.define w('aaa')
+      subject.define w('bbb')
+      subject.build.word_size.should == 2
+    end
+    it '同じ表記の単語を複数登録できる'
     it '文字列と位置から､辞書に登録された単語を返せる' do
       subject.define w('aaa')
       subject.define w('bbb')

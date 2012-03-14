@@ -212,6 +212,9 @@ module Okura
       def possible_words str,i
         @root.find_all str,i
       end
+      def word_size
+        @size
+      end
     end
     class DoubleArray
       def initialize words,base,check
@@ -233,6 +236,9 @@ module Okura
           end
         }
         return ret.map{|x|@words[x]}
+      end
+      def word_size
+        @words.size
       end
       class Builder
         class DAData
@@ -382,6 +388,9 @@ module Okura
     end
     def word_templates_for type_name
       @templates[type_name].dup
+    end
+    def rule_size
+      @templates.values.inject(0){|sum,t|sum+t.size}
     end
   end
   class CharTypes

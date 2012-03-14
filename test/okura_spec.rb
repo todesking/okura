@@ -300,6 +300,17 @@ Z,9,10,5244,記号,空白,*,*,*,*,*
         tagger.dic.unk_dic.rule_size.should == 2
         tagger.dic.word_dic.word_size.should == 3
         tagger.mat.cost(0,1).should == 5
+
+        pending {
+          w2=tagger.dic.word_dic.possible_words('w2',0)[0]
+          w2.left.name.should == 'F5'
+          w2.right.name.should == 'F6'
+        }
+        penging {
+          u1=tagger.dic.unk_dic.word_templates_for('A')
+          u1.left.name.should == 'F5'
+          u1.right.name.should == 'F6'
+        }
       }
     end
   end

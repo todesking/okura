@@ -11,11 +11,26 @@ commands={
 	Okura::Console.new.run_console dict_dir
   },
   :compile => lambda {|args|
-	raise IllegalOption.new('Usage: compile dict_dir dest_dir') unless args.length==2
 	require 'okura/serializer'
+    require 'optparse'
+    format_info=Okura::Serializer::FormatInfo.new
+    opt=OptionParser.new
+    dry=false
+    opt.on('--word_dic=TYPE'){|t| format_info.word_dic=t.to_sym}
+    opt.on('--dry'){|d|dry=d}
+    opt.parse! args
+	raise IllegalOption.new('Usage: compile dict_dir dest_dir') unless args.length==2
     dict_dir=args[0]
     bin_dir=args[1]
-    format_info=Okura::Serializer::FormatInfo.new
+    puts <<-EOS
+Format:
+  word_dic: #{format_info.word_dic}
+  unk_dic: #{format_info.unk_dic}
+  features: #{format_info.features}
+  char_types: #{format_info.char_types}
+  matrix: #{format_info.matrix}
+    EOS
+    next if dry
     format_info.compile_dict(dict_dir,bin_dir)
   },
   :help => lambda {|args|
@@ -24,6 +39,7 @@ USAGE: okura command args
 command:
   console dict_dir
   help
+  compile
 	EOS
   }
 }

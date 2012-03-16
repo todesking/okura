@@ -49,7 +49,7 @@ module Okura
       def possible_words str,i
         ret=[]
         prev=nil
-        cur=0
+        cur=1
         str[i..-1].bytes.each{|c|
           next_index=@base[cur]+c+1
           break unless @check[next_index]==cur
@@ -69,82 +69,118 @@ module Okura
       class Builder
         class DAData
           def initialize root
-            @base=[]
-            @check=[nil]
-            @used=[true]
-            construct root
+            # offset | +0       | +1       | +2       | ...
+            # data   | -data_id | child(0) | child(1) | ...
+            # base[0] = -last free cell
+            # check[0] = -first free cell
+            # 1 = root node id
+            @base=[0,0]
+            @check=[0,0]
+            @length=2
+            b,node_id=construct! root
+            @base[1]=b
           end
           attr_reader :base
           attr_reader :check
+          attr_reader :length
 
-          private
-          def construct node
-            s=alloc 0,node
-            @base[0]=s
-            return s
-          end
-          def alloc parent,node
-            s=nil
-            length.times{|i|
-              if (!node.has_data? || !@used[i]) && node.children.keys.none?{|c|@used[i+c+1]}
-                s=i
-                break
-              end
-            }
-            s=self.length if s.nil?
-
-            @used[s]=true if node.has_data?
-            node.children.keys.each{|c|
-              @used[s+c+1]=true
-            }
-
+          def construct! node,parent=1
+            # base[parent_node_id] should == s
+            # -base[s+0] : data id
+            # s+1+c : child node id for char c
+            # check[m] : parent node id for node m
+            s=find_free_space_for node
             if node.has_data?
-              idx=s+0
-              assert @used[idx]
-              @base[idx]=-node.data-1
-              @check[idx]=parent
+              alloc! s,parent
+              @base[s]=-node.data_id-1
             end
+            node.children.each{|c,cn| alloc! child_index(s,c),parent }
             node.children.each{|c,cn|
-              assert 0<=c
-              idx=s+c+1
-              assert @used[idx]
-              cs=alloc idx,cn
-              @base[idx]=cs
-              @check[idx]=parent
+              idx=child_index(s,c)
+              @base[idx]=construct! cn,idx
             }
             s
           end
-          def length
-            [@base,@check,@used].map(&:length).max
+          def child_index base,c
+            base+c+1
           end
-          def to_s indent=0,parent=0
-            ret="#{' '*indent}+ #{parent}"
-            length.times{|i|
-              if @check[i]==parent
-                ret+="\n#{' '*indent}  base=#{base[i]}"
-                ret+="\n"+to_s(indent+2,i)
+          def alloc! index,parent
+            assert index>0
+            assert free?(index)
+            if length <= index
+              expand!(index+1)
+            end
+            assert has_free_cell?
+
+            prev_free=-@base[index]
+            next_free=-@check[index]
+            @base[next_free]=-prev_free
+            @check[prev_free]=-next_free
+            @base[index]=0 # dummy value
+            @check[index]=parent
+            assert !free?(index)
+          end
+          def expand! size
+            if size <= length
+              return
+            end
+            (length...size).each{|i|
+              if has_free_cell?
+                @base[i]=@base[0]
+                @check[i]=0
+                @check[-@base[0]]=-i
+                @base[0]=-i
+              else
+                @base[i]=0
+                @check[i]=0
+                @base[0]=-i
+                @check[0]=-i
               end
             }
-            ret
+            @length=size
+          end
+          def free? index
+            length <= index || @check[index] <= 0
+          end
+          def find_free_space_for node
+            alloc_indexes=node.children.keys.map{|c|c+1}
+            alloc_indexes+=[0] if node.has_data?
+            return 0 if alloc_indexes.empty?
+            min=alloc_indexes.min
+            i=-@check[0]
+            while i!=0
+              assert free?(i)
+              if 0 < i-min && alloc_indexes.all?{|idx|free?(idx+i-min)}
+                return i-min
+              end
+              i=-@check[i]
+            end
+            # free space not found
+            return [length-min,1].max
+          end
+          def has_free_cell?
+            @base[0]!=0
           end
           def assert cond
-            raise 'assertion error' unless cond
+            raise unless cond
           end
         end
         class Node
           def initialize
+            @data_id=nil
             @children={}
-            @data=nil
           end
-          def has_data?; !@data.nil?; end
+          attr_reader :data_id
           attr_reader :children
-          attr_reader :data
-          def add key,i,data
-            if key.length==i
-              @data=data
+          def has_data?
+            !!data_id
+          end
+          def add bytes,idx,data_id
+            if idx==bytes.length
+              @data_id=data_id
             else
-              child_node=( @children[key[i]]||=Node.new )
-              child_node.add key,i+1,data
+              c=bytes[idx]
+              (@children[c]||=Node.new).add(bytes,idx+1,data_id)
             end
           end
         end

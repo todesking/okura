@@ -449,22 +449,6 @@ describe Okura::WordDic::DoubleArray do
     dic.instance_eval{@words}
   end
   it_should_behave_like 'WordDic'
-  describe 'when empty' do
-    it 'should one-element arrays' do
-      dic=subject.build
-      base(dic).should == [0]
-      check(dic).should == [nil]
-    end
-  end
-  describe 'when a single-char word defined' do
-    it 'should 4-elements arrays' do
-      subject.define w("\u0001",1,2,3)
-      dic=subject.build
-      words(dic).should == [w("\u0001",1,2,3)]
-      base(dic).should == [0,-1,1]
-      check(dic).should == [nil,2,0]
-    end
-  end
 end
 
 describe Okura::Features do

@@ -371,7 +371,17 @@ shared_examples_for 'WordDic' do
       subject.define w('bbb')
       subject.build.word_size.should == 2
     end
-    it '同じ表記の単語を複数登録できる'
+    it '同じ表記の単語を複数登録できる' do
+      w1=Okura::Word.new 'w',f(1),f(2),100
+      w2=Okura::Word.new 'w',f(10),f(20),200
+      subject.define w1
+      subject.define w1
+      subject.define w2
+
+      wd=subject.build
+
+      wd.possible_words('w',0).should == [w1,w1,w2]
+    end
     it '文字列と位置から､辞書に登録された単語を返せる' do
       subject.define w('aaa')
       subject.define w('bbb')

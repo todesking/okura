@@ -104,6 +104,31 @@ module Okura
       node
     end
   end
+  class Words
+    def initialize
+      # group id -> [Word]
+      @groups={}
+      @next_group_id=0
+      # surface -> id
+      @group_ids={}
+    end
+    def add word
+      unless @group_ids.has_key? word.surface
+        gid=@next_group_id
+        @next_group_id+=1
+        @group_ids[word.surface]=gid
+        @groups[gid]=[word]
+        gid
+      else
+        gid=@group_ids[word.surface]
+        @groups[gid].push word
+        gid
+      end
+    end
+    def group group_id
+      @groups[group_id]
+    end
+  end
   class Word
     def initialize surface,left,right,cost
       raise unless left.respond_to? :text

@@ -182,6 +182,7 @@ Z,9,10,5244,記号,空白,*,*,*,*,*
         EOS
 
         fi=Okura::Serializer::FormatInfo.new
+        fi.encoding='UTF-8'
         fi.compile_dict(src_dir,bin_dir)
 
         tagger=Okura::Serializer::FormatInfo.create_tagger(bin_dir)
@@ -281,7 +282,7 @@ TYPE3   0 1 3
 あがなう,854,458,6636,動詞,自立,*,*,五段・ワ行促音便,基本形,あがなう,アガナウ,アガナウ,あがなう/購う/贖う,
 あがめる,645,546,1234,動詞,自立,*,*,一段,基本形,あがめる,アガメル,アガメル,あがめる/崇める,
       EOS
-      serializer.compile(features,[as_io(src)],out)
+      serializer.compile(features,[as_io(src)],'UTF-8',out)
       out.rewind
       wd=serializer.load(out)
 

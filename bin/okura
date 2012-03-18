@@ -18,17 +18,20 @@ commands={
     dry=false
     opt.on('--word_dic=TYPE'){|t| format_info.word_dic=t.to_sym}
     opt.on('--dry'){|d|dry=d}
+    opt.on('--encoding=ENCODING'){|encoding| format_info.encoding=encoding}
     opt.parse! args
 	raise IllegalOption.new('Usage: compile dict_dir dest_dir') unless args.length==2
     dict_dir=args[0]
     bin_dir=args[1]
     puts <<-EOS
-Format:
-  word_dic: #{format_info.word_dic}
-  unk_dic: #{format_info.unk_dic}
-  features: #{format_info.features}
-  char_types: #{format_info.char_types}
-  matrix: #{format_info.matrix}
+Settings
+- File Encoding: #{format_info.encoding}
+- Format:
+  - word_dic: #{format_info.word_dic}
+  - unk_dic: #{format_info.unk_dic}
+  - features: #{format_info.features}
+  - char_types: #{format_info.char_types}
+  - matrix: #{format_info.matrix}
     EOS
     next if dry
     format_info.compile_dict(dict_dir,bin_dir)

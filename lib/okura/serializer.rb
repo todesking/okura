@@ -12,12 +12,14 @@ module Okura
         @features=:Marshal
         @char_types=:Marshal
         @matrix=:Marshal
+        @encoding='EUC-JP'
       end
       attr_accessor :word_dic
       attr_accessor :unk_dic
       attr_accessor :features
       attr_accessor :char_types
       attr_accessor :matrix
+      attr_accessor :encoding
 
       # 指定されたディレクトリにあるソースをコンパイルする
       def compile_dict src_dir,bin_dir
@@ -32,7 +34,7 @@ module Okura
           Dir.chdir(src_dir){ Dir.glob('*.csv') }.
           map{|file|File.join(src_dir,file)}
         open_dest(bin_dir,'word_dic.bin'){|dest|
-          serializer_for('WordDic',word_dic).compile(features_l,word_src_files,dest)
+          serializer_for('WordDic',word_dic).compile(features_l,word_src_files,encoding,dest)
         }
 
         char_types=open_src(src_dir,'char.def'){|src|
@@ -98,7 +100,7 @@ module Okura
       end
       private
       def open_src dir,filename,&block
-        File.open(File.join(dir,filename),'r',&block)
+        File.open(File.join(dir,filename),"r:#{encoding}:UTF-8",&block)
       end
       def open_dest dir,filename,&block
         File.open(File.join(dir,filename),'wb:ASCII-8BIT',&block)
@@ -129,10 +131,20 @@ module Okura
       end
     end
     module WordDic
+      def self.each_input inputs,encoding,&block
+        inputs.each{|input|
+          case input
+          when String
+            File.open(input,"r:#{encoding}:UTF-8",&block)
+          else
+            block.call input
+          end
+        }
+      end
       class Naive
-        def compile(features,inputs,output)
+        def compile(features,inputs,encoding,output)
           dic=Okura::WordDic::Naive.new
-          each_input(inputs){|input|
+          Okura::Serializer::WordDic.each_input(inputs,encoding){|input|
             parser=Okura::Parser::Word.new(input)
             parser.each{|surface,lid,rid,cost|
               word=Okura::Word.new(
@@ -149,23 +161,12 @@ module Okura
         def load(io)
           Marshal.load(io)
         end
-        private 
-        def each_input inputs,&block
-          inputs.each{|input|
-            case input
-            when String
-              File.open(input,'r',&block)
-            else
-              block.call input
-            end
-          }
-        end
       end
       class DoubleArray
-        def compile(features,inputs,output)
+        def compile(features,inputs,encoding,output)
           puts 'loading'
           dic=Okura::WordDic::DoubleArray::Builder.new
-          each_input(inputs){|input|
+          Okura::Serializer::WordDic.each_input(inputs,encoding){|input|
             parser=Okura::Parser::Word.new(input)
             parser.each{|surface,lid,rid,cost|
               word=Okura::Word.new(
@@ -222,17 +223,6 @@ module Okura
           base=reader.read_int32_array
           check=reader.read_int32_array
           Okura::WordDic::DoubleArray::Builder.build_from_serialized [words,base,check]
-        end
-        private 
-        def each_input inputs,&block
-          inputs.each{|input|
-            case input
-            when String
-              File.open(input,'r',&block)
-            else
-              block.call input
-            end
-          }
         end
       end
     end

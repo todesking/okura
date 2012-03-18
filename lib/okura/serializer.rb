@@ -101,10 +101,10 @@ module Okura
         File.open(File.join(dir,filename),'r',&block)
       end
       def open_dest dir,filename,&block
-        File.open(File.join(dir,filename),'w',&block)
+        File.open(File.join(dir,filename),'wb:ASCII-8BIT',&block)
       end
       def open_bin dir,filename,&block
-        File.open(File.join(dir,filename),'r',&block)
+        File.open(File.join(dir,filename),'rb:ASCII-8BIT',&block)
       end
       def serializer_for data_type_name,format_type_name
         data_type=Okura::Serializer.const_get data_type_name
@@ -176,12 +176,22 @@ module Okura
               dic.define word
             }
           }
-          data=dic.data_for_serialize
-          Marshal.dump(data,output)
+
+          writer=Okura::Serializer::BinaryWriter.new output
+          words,base,check=dic.data_for_serialize
+          raise 'base.length!=check.length' if base.length!=check.length
+          Marshal.dump words,output
+          writer.write_int32 base.length
+          writer.write_int32_array base
+          writer.write_int32_array check
         end
         def load(io)
-          data=Marshal.load(io)
-          Okura::WordDic::DoubleArray::Builder.build_from_serialized data
+          reader=Okura::Serializer::BinaryReader.new io
+          words=Marshal.load(io)
+          array_size=reader.read_int32
+          base=reader.read_int32_array array_size
+          check=reader.read_int32_array array_size
+          Okura::WordDic::DoubleArray::Builder.build_from_serialized [words,base,check]
         end
         private 
         def each_input inputs,&block
@@ -251,6 +261,28 @@ module Okura
         def load(io)
           ::Marshal.load(io)
         end
+      end
+    end
+    class BinaryReader
+      def initialize io
+        @io=io
+      end
+      def read_int32
+        @io.read(4).unpack('l').first
+      end
+      def read_int32_array size
+        @io.read(4*size).unpack('l*')
+      end
+    end
+    class BinaryWriter
+      def initialize io
+        @io=io
+      end
+      def write_int32 value
+        @io.write [value].pack('l')
+      end
+      def write_int32_array value
+        @io.write value.pack('l*')
       end
     end
   end

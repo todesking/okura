@@ -7,7 +7,7 @@ module Okura
     # 辞書ファイルのコンパイル形式を表現し､コンパイルとロードの制御を担当する
     class FormatInfo
       def initialize
-        @word_dic=:Naive
+        @word_dic=:DoubleArray
         @unk_dic=:Marshal
         @features=:Marshal
         @char_types=:Marshal

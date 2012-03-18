@@ -43,6 +43,7 @@ module Okura
       end
     end
     class DoubleArray
+      # Words -> [Integer] -> [Integer]
       def initialize words,base,check
         @words,@base,@check=words,base,check
       end
@@ -61,16 +62,17 @@ module Okura
             ret.push -@base[eos_index]-1
           end
         }
-        return ret.map{|x|@words[x]}
+        return ret.map{|x|@words.group(x)}.flatten(1)
       end
       def word_size
-        @words.size
+        @words.word_size
       end
       class Builder
         class DAData
           def initialize root
-            # offset | +0       | +1       | +2       | ...
-            # data   | -data_id | child(0) | child(1) | ...
+            # offset | +0         | +1       | +2       | ...
+            # data   | -data_id-1 | child(0) | child(1) | ...
+            #
             # base[0] = -last free cell
             # check[0] = -first free cell
             # 1 = root node id
@@ -186,13 +188,12 @@ module Okura
         end
         def initialize
           @root=Node.new
-          @words=[]
+          @words=Okura::Words.new
         end
         def define word
-          wid=@words.length
-          @words.push word
+          word_group_id=@words.add word
           key=word.surface.bytes.to_a
-          @root.add key,0,wid
+          @root.add key,0,word_group_id
         end
         def build
           da=DAData.new @root

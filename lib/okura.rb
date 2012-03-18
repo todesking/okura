@@ -128,6 +128,9 @@ module Okura
     def group group_id
       @groups[group_id]
     end
+    def word_size
+      @groups.values.inject(0){|a,x|a+x.size}
+    end
   end
   class Word
     def initialize surface,left,right,cost

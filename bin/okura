@@ -34,6 +34,7 @@ Settings
   - matrix: #{format_info.matrix}
     EOS
     next if dry
+    Dir.mkdir bin_dir unless File.exists? bin_dir
     format_info.compile_dict(dict_dir,bin_dir)
   },
   :help => lambda {|args|

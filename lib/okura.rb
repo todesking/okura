@@ -105,36 +105,116 @@ module Okura
     end
   end
   class Words
-    def initialize
-      # group id -> [Word]
-      @groups={}
-      @next_group_id=0
-      # surface -> id
-      @group_ids={}
-    end
-    def add word
-      unless @group_ids.has_key? word.surface
-        gid=@next_group_id
-        @next_group_id+=1
-        @group_ids[word.surface]=gid
-        @groups[gid]=[word]
-        gid
-      else
-        gid=@group_ids[word.surface]
-        @groups[gid].push word
-        gid
+    class CompactStringArray
+      def initialize str,indices
+        @str=str
+        @indices=indices
+      end
+      def get id
+        raise 'bad id' unless id < @indices.length
+        from=@indices[id]
+        to=(id+1 < @indices.length) ? @indices[id+1] : @str.length
+        @str[from...to]
+      end
+      def [](id)
+        get id
+      end
+      class Builder
+        def initialize
+          @indices=[]
+          @surfaces=[]
+          @size=0
+        end
+        def build
+          Okura::Words::CompactStringArray.new @surfaces.join(''),@indices
+        end
+        def add surface
+          id=@indices.length
+          @indices.push @size
+          @surfaces.push surface
+          @size+=surface.size
+          id
+        end
       end
     end
+    class Builder
+      def initialize
+        # group id -> [Word]
+        @groups=[]
+        @next_group_id=0
+        # surface -> id
+        @group_ids={}
+        @surfaces=Okura::Words::CompactStringArray::Builder.new
+        @left_features=Features.new
+        @right_features=Features.new
+        @surface_ids=[]
+        @left_ids=[]
+        @right_ids=[]
+        @costs=[]
+      end
+      def add word
+        unless @group_ids.has_key? word.surface
+          gid=add_group! word.surface
+          wid=add_word! gid,word
+          @group_ids[word.surface]=gid
+          @groups[gid]=[wid]
+          gid
+        else
+          gid=@group_ids[word.surface]
+          wid=add_word! gid,word
+          @groups[gid].push wid
+          gid
+        end
+      end
+      def build
+        Okura::Words.new(
+          @groups,@surfaces.build,@left_features,@right_features,@surface_ids,@left_ids,@right_ids,@costs
+        )
+      end
+      private
+      def add_group! surface
+        group_id=@surfaces.add surface
+        group_id
+      end
+      def add_word! group_id,word
+        wid=@surface_ids.length
+        @surface_ids.push group_id
+        @left_ids.push word.left.id
+        @right_ids.push word.right.id
+        @left_features.add word.left.id,word.left.text
+        @right_features.add word.right.id,word.right.text
+        @costs.push word.cost
+        wid
+      end
+    end
+    def initialize groups,surfaces,left_features,right_features,surface_ids,left_ids,right_ids,costs
+      # group id -> [word id]
+      @groups=groups
+      @surfaces=surfaces
+      @left_features=left_features
+      @right_features=right_features
+      @surface_ids=surface_ids
+      @left_ids=left_ids
+      @right_ids=right_ids
+      @costs=costs
+    end
     def group group_id
-      @groups[group_id]
+      @groups[group_id].map{|wid|
+        Word.new(
+          @surfaces[@surface_ids[wid]],
+          @left_features[@left_ids[wid]],
+          @right_features[@right_ids[wid]],
+          @costs[wid]
+        )
+      }
     end
     def word_size
-      @groups.values.inject(0){|a,x|a+x.size}
+      @groups.inject(0){|a,x|a+x.size}
     end
   end
   class Word
     def initialize surface,left,right,cost
-      raise unless left.respond_to? :text
+      raise "bad feature: #{left.inspect}" unless left.respond_to? :text
       @surface,@left,@right,@cost=surface,left,right,cost
     end
     # String
@@ -179,6 +259,9 @@ module Okura
     # Integer -> Feature
     def from_id id
       @map_id[id]
+    end
+    def [](id)
+      from_id id
     end
     def add id,text
       @map_id[id]=Feature.new id,text

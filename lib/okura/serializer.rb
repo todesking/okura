@@ -163,6 +163,7 @@ module Okura
       end
       class DoubleArray
         def compile(features,inputs,output)
+          puts 'loading'
           dic=Okura::WordDic::DoubleArray::Builder.new
           each_input(inputs){|input|
             parser=Okura::Parser::Word.new(input)
@@ -180,17 +181,46 @@ module Okura
           writer=Okura::Serializer::BinaryWriter.new output
           words,base,check=dic.data_for_serialize
           raise 'base.length!=check.length' if base.length!=check.length
-          Marshal.dump words,output
-          writer.write_int32 base.length
+          puts 'serialize words'
+          words.instance_eval do
+            writer.write_object @groups
+            writer.write_object @left_features
+            writer.write_object @right_features
+            writer.write_int32_array @left_ids
+            writer.write_int32_array @right_ids
+            writer.write_int32_array @costs
+            writer.write_int32_array @surface_ids
+            puts 'serialize surfaces'
+            @surfaces.instance_eval do
+              writer.write_object @str
+              writer.write_int32_array @indices
+            end
+          end
+          puts 'serialize DAT indices'
           writer.write_int32_array base
           writer.write_int32_array check
         end
         def load(io)
           reader=Okura::Serializer::BinaryReader.new io
-          words=Marshal.load(io)
-          array_size=reader.read_int32
-          base=reader.read_int32_array array_size
-          check=reader.read_int32_array array_size
+          words=begin
+                  groups=reader.read_object
+                  left_features=reader.read_object
+                  right_features=reader.read_object
+                  left_ids=reader.read_int32_array
+                  right_ids=reader.read_int32_array
+                  costs=reader.read_int32_array
+                  surface_ids=reader.read_int32_array
+                  surfaces=begin
+                             str=reader.read_object
+                             indices=reader.read_int32_array
+                             Okura::Words::CompactStringArray.new str,indices
+                           end
+                  Okura::Words.new(
+                    groups,surfaces,left_features,right_features,surface_ids,left_ids,right_ids,costs
+                  )
+                end
+          base=reader.read_int32_array
+          check=reader.read_int32_array
           Okura::WordDic::DoubleArray::Builder.build_from_serialized [words,base,check]
         end
         private 
@@ -270,8 +300,12 @@ module Okura
       def read_int32
         @io.read(4).unpack('l').first
       end
-      def read_int32_array size
+      def read_int32_array
+        size=read_int32
         @io.read(4*size).unpack('l*')
+      end
+      def read_object
+        Marshal.load @io
       end
     end
     class BinaryWriter
@@ -282,7 +316,11 @@ module Okura
         @io.write [value].pack('l')
       end
       def write_int32_array value
+        write_int32 value.length
         @io.write value.pack('l*')
+      end
+      def write_object obj
+        Marshal.dump obj,@io
       end
     end
   end

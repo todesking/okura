@@ -188,7 +188,7 @@ module Okura
         end
         def initialize
           @root=Node.new
-          @words=Okura::Words.new
+          @words=Okura::Words::Builder.new
         end
         def define word
           word_group_id=@words.add word
@@ -197,12 +197,12 @@ module Okura
         end
         def build
           da=DAData.new @root
-          DoubleArray.new @words,da.base,da.check
+          DoubleArray.new *data_for_serialize
         end
         # -> [ Words, [Integer], [Integer] ]
         def data_for_serialize
           da=DAData.new @root
-          [@words,da.base,da.check]
+          [@words.build,da.base,da.check]
         end
         # [ Words, [Integer], [Integer] ] -> WordDic::DoubleArray
         def self.build_from_serialized data

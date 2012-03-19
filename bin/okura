@@ -4,13 +4,13 @@
 require 'rubygems'
 
 commands={
-  :console => lambda {|args|
+  'console' => lambda {|args|
 	require 'okura/console'
 	raise IllegalOption.new('Usage: console dict_dir') unless args.length==1
 	dict_dir=args[0]
 	Okura::Console.new.run_console dict_dir
   },
-  :compile => lambda {|args|
+  'compile' => lambda {|args|
 	require 'okura/serializer'
     require 'optparse'
     format_info=Okura::Serializer::FormatInfo.new
@@ -37,13 +37,15 @@ Settings
     Dir.mkdir bin_dir unless File.exists? bin_dir
     format_info.compile_dict(dict_dir,bin_dir)
   },
-  :help => lambda {|args|
+  'help' => lambda {|args|
 	puts <<-EOS
-USAGE: okura command args
+USAGE:
+  okura command [args]
+  okura --version
 command:
+  compile src_dir dest_dir
   console dict_dir
   help
-  compile
 	EOS
   }
 }
@@ -58,13 +60,20 @@ end
 if $*.empty?
   commands[:help].call []
 else
-  command=$*.first.to_sym
+  command=$*.first
+  if command == '--version'
+    require 'okura/version'
+    puts "Okura #{Okura::Version}"
+    exit 0
+  end
   unless commands.has_key? command
+    puts "unknown command: #{command}"
 	commands[:help].call []
 	exit 1
   end
   begin
 	commands[command].call $*[1..-1]
+    exit 0
   rescue IllegalOption
 	$stderr.puts $!.message
 	exit 1

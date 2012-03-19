@@ -164,7 +164,7 @@ module Okura
       end
       class DoubleArray
         def compile(features,inputs,encoding,output)
-          puts 'loading'
+          puts 'loading...'
           dic=Okura::WordDic::DoubleArray::Builder.new
           Okura::Serializer::WordDic.each_input(inputs,encoding){|input|
             parser=Okura::Parser::Word.new(input)
@@ -182,7 +182,7 @@ module Okura
           writer=Okura::Serializer::BinaryWriter.new output
           words,base,check=dic.data_for_serialize
           raise 'base.length!=check.length' if base.length!=check.length
-          puts 'serialize words'
+          puts 'writing words...'
           words.instance_eval do
             writer.write_object @groups
             writer.write_object @left_features
@@ -191,13 +191,12 @@ module Okura
             writer.write_int32_array @right_ids
             writer.write_int32_array @costs
             writer.write_int32_array @surface_ids
-            puts 'serialize surfaces'
             @surfaces.instance_eval do
               writer.write_object @str
               writer.write_int32_array @indices
             end
           end
-          puts 'serialize DAT indices'
+          puts 'writing word index...'
           writer.write_int32_array base
           writer.write_int32_array check
         end

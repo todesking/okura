@@ -1,5 +1,6 @@
 *~
 .rvmrc
+.rbenv-version
 Gemfile.lock
 coverage/
 coverage.vim

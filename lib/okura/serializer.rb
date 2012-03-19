@@ -30,11 +30,17 @@ module Okura
           }
         }
 
+        features_r=open_src(src_dir,'right-id.def'){|src|
+          open_dest(bin_dir,'right-id.bin'){|dest|
+            serializer_for('Features',features).compile(src,dest)
+          }
+        }
+
         word_src_files=
           Dir.chdir(src_dir){ Dir.glob('*.csv') }.
           map{|file|File.join(src_dir,file)}
         open_dest(bin_dir,'word_dic.bin'){|dest|
-          serializer_for('WordDic',word_dic).compile(features_l,word_src_files,encoding,dest)
+          serializer_for('WordDic',word_dic).compile(features_l,features_r,word_src_files,encoding,dest)
         }
 
         char_types=open_src(src_dir,'char.def'){|src|
@@ -45,7 +51,7 @@ module Okura
 
         open_src(src_dir,'unk.def'){|src|
           open_dest(bin_dir,'unk_dic.bin'){|dest|
-            serializer_for('UnkDic',unk_dic).compile(char_types,features_l,src,dest)
+            serializer_for('UnkDic',unk_dic).compile(char_types,features_l,features_r,src,dest)
           }
         }
 
@@ -62,6 +68,9 @@ module Okura
       end
       def create_tagger bin_dir
         features_l=open_bin(bin_dir,'left-id.bin'){|bin|
+          serializer_for('Features',features).load(bin)
+        }
+        features_r=open_bin(bin_dir,'right-id.bin'){|bin|
           serializer_for('Features',features).load(bin)
         }
         wd=open_bin(bin_dir,'word_dic.bin'){|f|
@@ -142,15 +151,15 @@ module Okura
         }
       end
       class Naive
-        def compile(features,inputs,encoding,output)
+        def compile(features_l,features_r,inputs,encoding,output)
           dic=Okura::WordDic::Naive.new
           Okura::Serializer::WordDic.each_input(inputs,encoding){|input|
             parser=Okura::Parser::Word.new(input)
             parser.each{|surface,lid,rid,cost|
               word=Okura::Word.new(
                 surface,
-                features.from_id(lid),
-                features.from_id(rid),
+                features_l.from_id(lid),
+                features_r.from_id(rid),
                 cost
               )
               dic.define word
@@ -163,7 +172,7 @@ module Okura
         end
       end
       class DoubleArray
-        def compile(features,inputs,encoding,output)
+        def compile(features_l,features_r,inputs,encoding,output)
           puts 'loading...'
           dic=Okura::WordDic::DoubleArray::Builder.new
           Okura::Serializer::WordDic.each_input(inputs,encoding){|input|
@@ -171,8 +180,8 @@ module Okura
             parser.each{|surface,lid,rid,cost|
               word=Okura::Word.new(
                 surface,
-                features.from_id(lid),
-                features.from_id(rid),
+                features_l.from_id(lid),
+                features_r.from_id(rid),
                 cost
               )
               dic.define word
@@ -254,11 +263,11 @@ module Okura
     end
     module UnkDic
       class Marshal
-        def compile(char_types,features,input,output)
+        def compile(char_types,features_l,features_r,input,output)
           unk=Okura::UnkDic.new char_types
           parser=Okura::Parser::UnkDic.new input
           parser.each{|type_name,lid,rid,cost|
-            unk.define type_name,features.from_id(lid),features.from_id(rid),cost
+            unk.define type_name,features_l.from_id(lid),features_r.from_id(rid),cost
           }
           ::Marshal.dump(unk,output)
         end

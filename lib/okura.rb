@@ -113,8 +113,8 @@ module Okura
       def get id
         raise 'bad id' unless id < @indices.length
         from=@indices[id]
-        to=(id+1 < @indices.length) ? @indices[id+1] : @str.length
-        @str[from...to]
+        to=(id+1 < @indices.length) ? @indices[id+1] : @str.bytesize
+        (from...to).map{|i|@str.getbyte(i)}.pack('C*').force_encoding 'UTF-8'
       end
       def [](id)
         get id
@@ -132,7 +132,7 @@ module Okura
           id=@indices.length
           @indices.push @size
           @surfaces.push surface
-          @size+=surface.size
+          @size+=surface.bytesize
           id
         end
       end
@@ -258,7 +258,7 @@ module Okura
     end
     # Integer -> Feature
     def from_id id
-      @map_id[id]
+      @map_id[id] || (raise "Features: ID undefined (#{id})")
     end
     def [](id)
       from_id id

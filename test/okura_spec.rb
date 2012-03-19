@@ -191,16 +191,12 @@ Z,9,10,5244,記号,空白,*,*,*,*,*
         tagger.dic.word_dic.word_size.should == 3
         tagger.mat.cost(0,1).should == 5
 
-        pending {
-          w2=tagger.dic.word_dic.possible_words('w2',0)[0]
-          w2.left.name.should == 'F5'
-          w2.right.name.should == 'F6'
-        }
-        penging {
-          u1=tagger.dic.unk_dic.word_templates_for('A')
-          u1.left.name.should == 'F5'
-          u1.right.name.should == 'F6'
-        }
+        w2=tagger.dic.word_dic.possible_words('w2',0)[0]
+        w2.left.text.should == 'F5'
+        w2.right.text.should == 'F6'
+        u1=tagger.dic.unk_dic.word_templates_for('A')[0]
+        u1.left.text.should == 'F5'
+        u1.right.text.should == 'F6'
       }
     end
   end
@@ -272,17 +268,18 @@ TYPE3   0 1 3
     # subject : Serializer class
     it 'コンパイルして復元できる' do
       serializer=subject.new
-      features=Okura::Features.new
-      features.add 854,f(854)
-      features.add 458,f(458)
-      features.add 645,f(645)
-      features.add 546,f(546)
+      features_l=Okura::Features.new
+      features_l.add 854,f(854)
+      features_l.add 645,f(645)
+      features_r=Okura::Features.new
+      features_r.add 458,f(458)
+      features_r.add 546,f(546)
       out=StringIO.new
       src=<<-EOS
 あがなう,854,458,6636,動詞,自立,*,*,五段・ワ行促音便,基本形,あがなう,アガナウ,アガナウ,あがなう/購う/贖う,
 あがめる,645,546,1234,動詞,自立,*,*,一段,基本形,あがめる,アガメル,アガメル,あがめる/崇める,
       EOS
-      serializer.compile(features,[as_io(src)],'UTF-8',out)
+      serializer.compile(features_l,features_r,[as_io(src)],'UTF-8',out)
       out.rewind
       wd=serializer.load(out)
 
@@ -307,13 +304,14 @@ TYPE3   0 1 3
       cts.define_type 'Z',false,true,0
       cts.define_map 0x0001,cts.named('A'),[]
       cts.define_map 0x0002,cts.named('Z'),[]
-      features=Okura::Features.new
-      features.add 5,'F5'
-      features.add 6,'F6'
-      features.add 9,'F9'
-      features.add 10,'F10'
+      features_l=Okura::Features.new
+      features_l.add 5,'F5'
+      features_l.add 9,'F9'
+      features_r=Okura::Features.new
+      features_r.add 6,'F6'
+      features_r.add 10,'F10'
       out=StringIO.new
-      serializer.compile(cts,features,as_io(<<-EOS),out)
+      serializer.compile(cts,features_l,features_r,as_io(<<-EOS),out)
 A,5,6,3274,記号,一般,*,*,*,*,*
 Z,9,10,5244,記号,空白,*,*,*,*,*
       EOS

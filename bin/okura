@@ -58,7 +58,7 @@ class IllegalOption < StandardError
 end
 
 if $*.empty?
-  commands[:help].call []
+  commands['help'].call []
 else
   command=$*.first
   if command == '--version'

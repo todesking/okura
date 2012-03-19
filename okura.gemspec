@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rspec', ['~> 2.7.0']
   s.add_development_dependency 'simplecov', ['~> 0.5.4']
 
-  s.version     = '0.0.0'
+  s.version     = '0.0.1'
   s.files       = Dir['lib/**/*.rb'] + Dir['test/**/*.rb']
   s.bindir      = 'bin'
   s.executables = %w(okura)

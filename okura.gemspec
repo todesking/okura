@@ -11,4 +11,6 @@ Gem::Specification.new do |s|
 
   s.version     = '0.0.0'
   s.files       = Dir['lib/**/*.rb'] + Dir['test/**/*.rb']
+  s.bindir      = 'bin'
+  s.executables = %w(okura)
 end

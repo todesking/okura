@@ -5,13 +5,13 @@ require 'rubygems'
 
 commands={
   'console' => lambda {|args|
-	require 'okura/console'
-	raise IllegalOption.new('Usage: console dict_dir') unless args.length==1
-	dict_dir=args[0]
-	Okura::Console.new.run_console dict_dir
+    require 'okura/console'
+    raise IllegalOption.new('Usage: console dict_dir') unless args.length==1
+    dict_dir=args[0]
+    Okura::Console.new.run_console dict_dir
   },
   'compile' => lambda {|args|
-	require 'okura/serializer'
+    require 'okura/serializer'
     require 'optparse'
     format_info=Okura::Serializer::FormatInfo.new
     opt=OptionParser.new
@@ -20,7 +20,7 @@ commands={
     opt.on('--dry'){|d|dry=d}
     opt.on('--encoding=ENCODING'){|encoding| format_info.encoding=encoding}
     opt.parse! args
-	raise IllegalOption.new('Usage: compile dict_dir dest_dir') unless args.length==2
+      raise IllegalOption.new('Usage: compile dict_dir dest_dir') unless args.length==2
     dict_dir=args[0]
     bin_dir=args[1]
     puts <<-EOS
@@ -38,7 +38,7 @@ Settings
     format_info.compile_dict(dict_dir,bin_dir)
   },
   'help' => lambda {|args|
-	puts <<-EOS
+    puts <<-EOS
 USAGE:
   okura command [args]
   okura --version
@@ -46,14 +46,15 @@ command:
   compile src_dir dest_dir
   console dict_dir
   help
-	EOS
+  EOS
   }
 }
 
 class IllegalOption < StandardError
   def initialize msg
-	@message=msg
+        @message=msg
   end
+
   attr_reader :message
 end
 
@@ -66,18 +67,18 @@ else
     puts "Okura #{Okura::Version}"
     exit 0
   end
+
   unless commands.has_key? command
     puts "unknown command: #{command}"
-	commands[:help].call []
-	exit 1
+    commands[:help].call []
+    exit 1
   end
+
   begin
-	commands[command].call $*[1..-1]
+    commands[command].call $*[1..-1]
     exit 0
   rescue IllegalOption
-	$stderr.puts $!.message
-	exit 1
+    $stderr.puts $!.message
+    exit 1
   end
 end
-
-

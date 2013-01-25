@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 module Okura
   module WordDic
     class Naive
@@ -5,11 +7,13 @@ module Okura
         @size=0
         @root=TrieNode.new
       end
+
       class TrieNode
         def initialize
           @nodes={}
           @leafs=[]
         end
+
         def add word,i=0
           if i==word.surface.length
             @leafs.push word
@@ -20,6 +24,7 @@ module Okura
             node.add word,i+1
           end
         end
+
         def find_all str,i,res=Array.new
           res.concat @leafs
           return res unless i < str.length
@@ -29,24 +34,30 @@ module Okura
           res
         end
       end
+
       attr_reader :size
+
       def define word
         @size+=1
         @root.add word
       end
+
       # -> [Word]
       def possible_words str,i
         @root.find_all str,i
       end
+
       def word_size
         @size
       end
     end
+
     class DoubleArray
       # Words -> [Integer] -> [Integer]
       def initialize words,base,check
         @words,@base,@check=words,base,check
       end
+
       def possible_words str,i
         ret=[]
         prev=nil
@@ -64,9 +75,11 @@ module Okura
         }
         return ret.map{|x|@words.group(x)}.flatten(1)
       end
+
       def word_size
         @words.word_size
       end
+
       class Builder
         class DAData
           def initialize root
@@ -82,6 +95,7 @@ module Okura
             b,node_id=construct! root
             @base[1]=b
           end
+
           attr_reader :base
           attr_reader :check
           attr_reader :length
@@ -103,9 +117,11 @@ module Okura
             }
             s
           end
+
           def child_index base,c
             base+c+1
           end
+
           def alloc! index,parent
             assert index>0
             assert free?(index)
@@ -122,6 +138,7 @@ module Okura
             @check[index]=parent
             assert !free?(index)
           end
+
           def expand! size
             if size <= length
               return
@@ -141,9 +158,11 @@ module Okura
             }
             @length=size
           end
+
           def free? index
             length <= index || @check[index] <= 0
           end
+
           def find_free_space_for node
             alloc_indexes=node.children.keys.map{|c|c+1}
             alloc_indexes+=[0] if node.has_data?
@@ -160,23 +179,29 @@ module Okura
             # free space not found
             return [length-min,1].max
           end
+
           def has_free_cell?
             @base[0]!=0
           end
+
           def assert cond
             raise unless cond
           end
         end
+
         class Node
           def initialize
             @data_id=nil
             @children={}
           end
+
           attr_reader :data_id
           attr_reader :children
+
           def has_data?
             !!data_id
           end
+
           def add bytes,idx,data_id
             if idx==bytes.length
               @data_id=data_id
@@ -186,24 +211,29 @@ module Okura
             end
           end
         end
+
         def initialize
           @root=Node.new
           @words=Okura::Words::Builder.new
         end
+
         def define word
           word_group_id=@words.add word
           key=word.surface.bytes.to_a
           @root.add key,0,word_group_id
         end
+
         def build
           da=DAData.new @root
           DoubleArray.new *data_for_serialize
         end
+
         # -> [ Words, [Integer], [Integer] ]
         def data_for_serialize
           da=DAData.new @root
           [@words.build,da.base,da.check]
         end
+
         # [ Words, [Integer], [Integer] ] -> WordDic::DoubleArray
         def self.build_from_serialized data
           words,base,check=data

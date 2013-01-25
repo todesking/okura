@@ -1,4 +1,5 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
+
 require 'okura/word_dic'
 
 module Okura
@@ -6,14 +7,17 @@ module Okura
     def initialize dic,mat
       @dic,@mat=dic,mat
     end
+
     attr_reader :dic
     attr_reader :mat
+
     # -> [String]
     def wakati str
       mincost_path=parse(str).mincost_path
       return nil if mincost_path.nil?
       return mincost_path.map{|node|node.word.surface}
     end
+
     # -> Nodes
     def parse str
       chars=str.split(//)
@@ -28,18 +32,22 @@ module Okura
       nodes
     end
   end
+
   class Nodes
     def initialize len,mat
       @mat=mat
       @begins=(0...len).map{[]}
       @ends=(0...len).map{[]}
     end
+
     def [](i)
       @begins[i]
     end
+
     def length
       @begins.length
     end
+
     # Matrix -> [Node] | nil
     def mincost_path
       return [] if length==0
@@ -77,26 +85,32 @@ module Okura
       # success
       return ret.reverse
     end
+
     def add i,node
       @begins[i].push node
       @ends[i+node.length-1].push node
     end
   end
+
   class Node
     def initialize word
       @word=word
       @nearest_prev=nil
       @total_cost=nil
     end
+
     attr_reader :word
     attr_accessor :nearest_prev
     attr_accessor :total_cost
+
     def length
       word.surface.length
     end
+
     def to_s
       "Node(#{word},#{total_cost})"
     end
+
     def self.mk_bos_eos
       f=Features::BOS_EOS
       node=Node.new Word.new('BOS/EOS',f,f,0)
@@ -104,30 +118,36 @@ module Okura
       node
     end
   end
+
   class Words
     class CompactStringArray
       def initialize str,indices
         @str=str
         @indices=indices
       end
+
       def get id
         raise 'bad id' unless id < @indices.length
         from=@indices[id]
         to=(id+1 < @indices.length) ? @indices[id+1] : @str.bytesize
         (from...to).map{|i|@str.getbyte(i)}.pack('C*').force_encoding 'UTF-8'
       end
+
       def [](id)
         get id
       end
+
       class Builder
         def initialize
           @indices=[]
           @surfaces=[]
           @size=0
         end
+
         def build
           Okura::Words::CompactStringArray.new @surfaces.join(''),@indices
         end
+
         def add surface
           id=@indices.length
           @indices.push @size
@@ -137,6 +157,7 @@ module Okura
         end
       end
     end
+
     class Builder
       def initialize
         # group id -> [Word]
@@ -152,6 +173,7 @@ module Okura
         @right_ids=[]
         @costs=[]
       end
+
       def add word
         unless @group_ids.has_key? word.surface
           gid=add_group! word.surface
@@ -166,16 +188,20 @@ module Okura
           gid
         end
       end
+
       def build
         Okura::Words.new(
           @groups,@surfaces.build,@left_features,@right_features,@surface_ids,@left_ids,@right_ids,@costs
         )
       end
+
       private
+
       def add_group! surface
         group_id=@surfaces.add surface
         group_id
       end
+
       def add_word! group_id,word
         wid=@surface_ids.length
         @surface_ids.push group_id
@@ -187,6 +213,7 @@ module Okura
         wid
       end
     end
+
     def initialize groups,surfaces,left_features,right_features,surface_ids,left_ids,right_ids,costs
       # group id -> [word id]
       @groups=groups
@@ -198,6 +225,7 @@ module Okura
       @right_ids=right_ids
       @costs=costs
     end
+
     def group group_id
       @groups[group_id].map{|wid|
         Word.new(
@@ -208,15 +236,18 @@ module Okura
         )
       }
     end
+
     def word_size
       @groups.inject(0){|a,x|a+x.size}
     end
   end
+
   class Word
     def initialize surface,left,right,cost
       raise "bad feature: #{left.inspect}" unless left.respond_to? :text
       @surface,@left,@right,@cost=surface,left,right,cost
     end
+
     # String
     attr_reader :surface
     # Feature
@@ -225,58 +256,74 @@ module Okura
     attr_reader :right
     # Integer
     attr_reader :cost
+
     def == other
       return [surface,left,right,cost] ==
         [other.surface,other.left,other.right,other.cost]
     end
+
     def hash
       [surface,left,right,cost].hash
     end
+
     def to_s
       "Word(#{surface},#{left.id},#{right.id},#{cost})"
     end
   end
+
   class Feature
     def initialize id,text
       @id,@text=id,text
     end
+
     attr_reader :id
     attr_reader :text
+
     def to_s
       "Feature(#{id},#{text})"
     end
+
     def == other
       return self.id==other.id
     end
+
     def hash
       self.id.hash
     end
   end
+
   class Features
     def initialize
       @map_id={}
     end
+
     # Integer -> Feature
     def from_id id
       @map_id[id] || (raise "Features: ID undefined (#{id})")
     end
+
     def [](id)
       from_id id
     end
+
     def add id,text
       @map_id[id]=Feature.new id,text
     end
+
     def size
       @map_id.size
     end
     BOS_EOS=Feature.new 0,'BOS/EOS'
   end
+
   class Dic
     def initialize word_dic,unk_dic
       @word_dic,@unk_dic=word_dic,unk_dic
     end
+
     attr_reader :word_dic
     attr_reader :unk_dic
+
     # -> [Word]
     def possible_words str,i
       ret=@word_dic.possible_words str,i
@@ -284,6 +331,7 @@ module Okura
       ret
     end
   end
+
   class UnkDic
     # CharTypes -> Features ->
     def initialize char_types
@@ -291,6 +339,7 @@ module Okura
       # CharType.name => [Word]
       @templates={}
     end
+
     # -> [Word]
     def possible_words str,i,found_in_normal_dic
       ret=[]
@@ -309,79 +358,100 @@ module Okura
 
       ret
     end
+
     private
+
     def collect_result ret,type,surface
       (@templates[type.name]||[]).each{|tp|
         ret.push Word.new surface,tp.left,tp.right,tp.cost
       }
     end
+
     public
+
     # String -> Feature -> Feature -> Integer ->
     def define type_name,left,right,cost
       type=@char_types.named type_name
       (@templates[type_name]||=[]).push Word.new '',left,right,cost
     end
+
     def word_templates_for type_name
       @templates[type_name].dup
     end
+
     def rule_size
       @templates.values.inject(0){|sum,t|sum+t.size}
     end
   end
+
   class CharTypes
     def initialize
       @types={}
       @mapping={}
       @compat_mapping={}
     end
+
     def type_for charcode
       @mapping[charcode]||default_type||
         (raise "Char type for 0x#{charcode.to_s(16)} is not defined,"+
          " and DEFAULT type is not defined too")
     end
+
     def define_type name,invoke,group,length
       @types[name]=CharType.new(name,invoke,group,length)
     end
+
     def define_map charcode,type,compat_types
       @mapping[charcode]=type
       type.add charcode
       compat_types.each{|ct|ct.add charcode}
     end
+
     def named name
       @types[name] || (raise "Undefined char type: #{name}")
     end
+
     def default_type
       named 'DEFAULT'
     end
   end
+
   class CharType
     def initialize name,invoke,group,length
       @name,@invoke,@group,@length=name,invoke,group,length
       @accept_charcodes={}
     end
+
     def add charcode
       @accept_charcodes[charcode]=true
     end
+
     attr_reader :name
     attr_reader :length
+
     def group?; @group; end
     def invoke?; @invoke; end
+
     def accept? charcode
       @accept_charcodes[charcode]
     end
   end
+
   class Matrix
     def initialize rsize,lsize
       @mat=[nil]*(lsize*rsize)
       @lsize,@rsize=lsize,rsize
     end
+
     # Feature.id -> Feature.id -> Int
     def cost rid,lid
       @mat[rid*lsize+lid]
     end
+
     def set(rid,lid,cost)
       @mat[rid*lsize+lid]=cost
     end
+
     attr_reader :rsize
     attr_reader :lsize
   end

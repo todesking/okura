@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 require 'yaml'
 require 'okura'
 require 'okura/parser'
@@ -14,6 +16,7 @@ module Okura
         @matrix=:Marshal
         @encoding='EUC-JP'
       end
+
       attr_accessor :word_dic
       attr_accessor :unk_dic
       attr_accessor :features
@@ -61,11 +64,13 @@ module Okura
           }
         }
       end
+
       # 指定されたディレクトリにあるコンパイル済み辞書をロードし､Taggerを作成する
       def self.create_tagger bin_dir
         format_info=File.open(File.join(bin_dir,'format-info')){|f| self.load f }
         format_info.create_tagger bin_dir
       end
+
       def create_tagger bin_dir
         features_l=open_bin(bin_dir,'left-id.bin'){|bin|
           serializer_for('Features',features).load(bin)
@@ -86,6 +91,7 @@ module Okura
         tagger=Okura::Tagger.new dic,mat
         tagger
       end
+
       # このFormatInfoオブジェクトをシリアライズする
       def compile io
         YAML.dump({
@@ -96,6 +102,7 @@ module Okura
           matrix: matrix
         },io)
       end
+
       # シリアライズされたFormatInfoオブジェクトを復元する
       def self.load io
         data=YAML.load(io)
@@ -107,22 +114,28 @@ module Okura
         fi.matrix=data[:matrix]
         fi
       end
+
       private
+
       def open_src dir,filename,&block
         File.open(File.join(dir,filename),"r:#{encoding}:UTF-8",&block)
       end
+
       def open_dest dir,filename,&block
         File.open(File.join(dir,filename),'wb:ASCII-8BIT',&block)
       end
+
       def open_bin dir,filename,&block
         File.open(File.join(dir,filename),'rb:ASCII-8BIT',&block)
       end
+
       def serializer_for data_type_name,format_type_name
         data_type=Okura::Serializer.const_get data_type_name
         format_type=data_type.const_get format_type_name
         format_type.new
       end
     end
+
     module Features
       class Marshal
         def compile(input,output)
@@ -134,11 +147,13 @@ module Okura
           ::Marshal.dump(features,output)
           features
         end
+
         def load(io)
           ::Marshal.load(io)
         end
       end
     end
+
     module WordDic
       def self.each_input inputs,encoding,&block
         inputs.each{|input|
@@ -150,6 +165,7 @@ module Okura
           end
         }
       end
+
       class Naive
         def compile(features_l,features_r,inputs,encoding,output)
           dic=Okura::WordDic::Naive.new
@@ -167,10 +183,12 @@ module Okura
           }
           Marshal.dump(dic,output)
         end
+
         def load(io)
           Marshal.load(io)
         end
       end
+
       class DoubleArray
         def compile(features_l,features_r,inputs,encoding,output)
           puts 'loading...'
@@ -209,6 +227,7 @@ module Okura
           writer.write_int32_array base
           writer.write_int32_array check
         end
+
         def load(io)
           reader=Okura::Serializer::BinaryReader.new io
           words=begin
@@ -234,6 +253,7 @@ module Okura
         end
       end
     end
+
     module CharTypes
       class Marshal
         def compile(input,output)
@@ -256,11 +276,13 @@ module Okura
           ::Marshal.dump(cts,output)
           cts
         end
+
         def load(io)
           ::Marshal.load(io)
         end
       end
     end
+
     module UnkDic
       class Marshal
         def compile(char_types,features_l,features_r,input,output)
@@ -271,11 +293,13 @@ module Okura
           }
           ::Marshal.dump(unk,output)
         end
+
         def load(io)
           ::Marshal.load(io)
         end
       end
     end
+
     module Matrix
       class Marshal
         def compile(input,output)
@@ -286,37 +310,46 @@ module Okura
           }
           ::Marshal.dump(mat,output)
         end
+
         def load(io)
           ::Marshal.load(io)
         end
       end
     end
+
     class BinaryReader
       def initialize io
         @io=io
       end
+
       def read_int32
         @io.read(4).unpack('l').first
       end
+
       def read_int32_array
         size=read_int32
         @io.read(4*size).unpack('l*')
       end
+
       def read_object
         Marshal.load @io
       end
     end
+
     class BinaryWriter
       def initialize io
         @io=io
       end
+
       def write_int32 value
         @io.write [value].pack('l')
       end
+
       def write_int32_array value
         write_int32 value.length
         @io.write value.pack('l*')
       end
+
       def write_object obj
         Marshal.dump obj,@io
       end

@@ -1,4 +1,5 @@
-#-*- coding:utf-8
+# -*- coding: utf-8 -*-
+
 require File.join(File.dirname(__FILE__),'spec_helper.rb')
 require File.join(File.dirname(__FILE__),'..','lib','okura')
 require File.join(File.dirname(__FILE__),'..','lib','okura','parser')
@@ -23,14 +24,17 @@ end
 def as_io str
   StringIO.new str
 end
+
 def w surface,l,r,cost
   l=f(l) unless l.respond_to? :id
   r=f(r) unless r.respond_to? :id
   Okura::Word.new surface,l,r,cost
 end
+
 def f id,name="F#{id}"
   Okura::Feature.new id,name
 end
+
 def n *args
   Okura::Node.new *args
 end
@@ -57,6 +61,7 @@ describe Okura::Parser do
       ]
     end
   end
+
   describe 'Word' do
     it 'MeCab形式の単語ファイルを読める' do
       parser=Okura::Parser::Word.new as_io(<<-EOS)
@@ -68,8 +73,10 @@ describe Okura::Parser do
         ['あがめる',645,546,1234]
       ]
     end
-    it 'ダブルクオートでエスケープされた単語定義も扱える'
+
+    # it 'ダブルクオートでエスケープされた単語定義も扱える'
   end
+
   describe 'Feature' do
     it 'MeCab形式の品詞ファイルを読める' do
       parser=Okura::Parser::Feature.new as_io(<<-EOS)
@@ -82,6 +89,7 @@ describe Okura::Parser do
       ]
     end
   end
+
   describe 'CharType' do
     it 'MeCab形式の文字種定義ファイルを読める' do
       parser=Okura::Parser::CharType.new
@@ -113,6 +121,7 @@ KATAKANA       1 0 2
       ]
     end
   end
+
   describe 'UnkDic' do
     it '未知語の定義を読める' do
       parser=Okura::Parser::UnkDic.new as_io(<<-EOS)
@@ -148,6 +157,7 @@ describe 'Compile and load' do
       loaded.unk_dic.should == :Marshal
       loaded.matrix.should == :Marshal
     end
+
     it '設定に基づいて辞書をコンパイル/ロードできる' do
       with_dict_dir{|src_dir,bin_dir|
         set_content(src_dir,'w1.csv',<<-EOS)
@@ -200,6 +210,7 @@ Z,9,10,5244,記号,空白,*,*,*,*,*
       }
     end
   end
+
   describe Okura::Serializer::Features::Marshal do
     it 'コンパイルして復元できる' do
       serializer=Okura::Serializer::Features::Marshal.new
@@ -215,6 +226,7 @@ Z,9,10,5244,記号,空白,*,*,*,*,*
       features.from_id(1).text.should == 'その他,間投,*,*,*,*,*'
     end
   end
+
   describe Okura::Serializer::CharTypes::Marshal do
     it 'コンパイルして復元できる' do
       serializer=Okura::Serializer::CharTypes::Marshal.new
@@ -237,33 +249,34 @@ TYPE3   0 1 3
 
       cts=serializer.load(out)
 
-	  cts.type_for(0x21).name.should == 'TYPE1'
-	  cts.type_for(0x22).name.should == 'TYPE2'
-	  cts.type_for(0x23).name.should == 'TYPE3'
-	  cts.type_for(0x40).name.should == 'TYPE3'
-	  cts.type_for(0x41).name.should == 'DEFAULT'
-	  cts.type_for(0x99).name.should == 'TYPE1'
+          cts.type_for(0x21).name.should == 'TYPE1'
+          cts.type_for(0x22).name.should == 'TYPE2'
+          cts.type_for(0x23).name.should == 'TYPE3'
+          cts.type_for(0x40).name.should == 'TYPE3'
+          cts.type_for(0x41).name.should == 'DEFAULT'
+          cts.type_for(0x99).name.should == 'TYPE1'
 
-	  t1,t2,t3=cts.named('TYPE1'), cts.named('TYPE2'), cts.named('TYPE3')
+          t1,t2,t3=cts.named('TYPE1'), cts.named('TYPE2'), cts.named('TYPE3')
 
-	  t1.name.should == 'TYPE1'
+          t1.name.should == 'TYPE1'
 
-	  t1.invoke?.should be_true
-	  t2.invoke?.should be_false
+          t1.invoke?.should be_true
+          t2.invoke?.should be_false
 
-	  t1.group?.should be_false
-	  t2.group?.should be_true
+          t1.group?.should be_false
+          t2.group?.should be_true
 
-	  t2.length.should == 0
-	  t3.length.should == 3
+          t2.length.should == 0
+          t3.length.should == 3
 
-	  t1.should be_accept(0x21)
-	  t1.should_not be_accept(0x22)
-	  t2.should be_accept(0x22)
+          t1.should be_accept(0x21)
+          t1.should_not be_accept(0x22)
+          t2.should be_accept(0x22)
 
-	  t1.should be_accept(0x99)
+          t1.should be_accept(0x99)
     end
   end
+
   shared_examples_for 'WordDic serializer' do
     # subject : Serializer class
     it 'コンパイルして復元できる' do
@@ -288,14 +301,17 @@ TYPE3   0 1 3
       wd.possible_words('あがめる',1).should == []
     end
   end
+
   describe Okura::Serializer::WordDic::Naive do
     subject { Okura::Serializer::WordDic::Naive }
     it_should_behave_like 'WordDic serializer'
   end
+
   describe Okura::Serializer::WordDic::DoubleArray do
     subject { Okura::Serializer::WordDic::DoubleArray }
     it_should_behave_like 'WordDic serializer'
   end
+
   describe Okura::Serializer::UnkDic::Marshal do
     it 'コンパイルして復元できる' do
       serializer=Okura::Serializer::UnkDic::Marshal.new
@@ -322,6 +338,7 @@ Z,9,10,5244,記号,空白,*,*,*,*,*
       unk.word_templates_for('Z').first.cost.should == 5244
     end
   end
+
   describe Okura::Serializer::Matrix::Marshal do
     it 'コンパイルして復元できる' do
       serializer=Okura::Serializer::Matrix::Marshal.new
@@ -370,6 +387,7 @@ shared_examples_for 'WordDic' do
       subject.define w('bbb')
       subject.build.word_size.should == 2
     end
+
     it '同じ表記の単語を複数登録できる' do
       w1=Okura::Word.new 'w',f(1),f(2),100
       w2=Okura::Word.new 'w',f(10),f(20),200
@@ -381,6 +399,7 @@ shared_examples_for 'WordDic' do
 
       wd.possible_words('w',0).should == [w1,w1,w2]
     end
+
     it '文字列と位置から､辞書に登録された単語を返せる' do
       subject.define w('aaa')
       subject.define w('bbb')
@@ -394,6 +413,7 @@ shared_examples_for 'WordDic' do
       wd.possible_words('bbbaaa',1).should == []
       wd.possible_words('bbbaaa',3).should == [w('aa'),w('aaa')]
     end
+
     it 'マルチバイト文字にも対応している' do
       subject.define w('ニワトリ')
       wd=subject.build
@@ -401,11 +421,13 @@ shared_examples_for 'WordDic' do
       wd.possible_words('ニワトリ',0).should == [w('ニワトリ')]
       wd.possible_words('ニワトリ',1).should == []
     end
+
     def matches words,str,dest
       words.each{|word| subject.define w(word) }
       dic=subject.build
       dic.possible_words(str,0).should == dest.map{|d|w(d)}
     end
+
     it { matches %w()        , ''        , %w() }
     it { matches %w()        , 'aaa'     , %w() }
     it { matches %w(a)       , ''        , %w() }
@@ -435,9 +457,11 @@ describe Okura::WordDic::Naive do
     def initialize
       @wd=Okura::WordDic::Naive.new
     end
+
     def define *args
       @wd.define *args
     end
+
     def build
       @wd
     end
@@ -451,9 +475,11 @@ describe Okura::WordDic::DoubleArray do
   def base(dic)
     dic.instance_eval{@base}
   end
+
   def check(dic)
     dic.instance_eval{@check}
   end
+
   def words(dic)
     dic.instance_eval{@words}
   end
@@ -465,188 +491,210 @@ end
 
 describe Okura::CharTypes do
   describe '#type_for' do
-	describe '文字に対するCharTypeが定義されていない場合' do
-	  describe '文字種DEFAULTが定義されている場合' do
-		subject {
-		  cts=Okura::CharTypes.new
-		  cts.define_type 'DEFAULT',false,false,0
-		  cts
-		}
-		it 'CharType#default_typeが返る' do
-		  subject.type_for('a'.ord).name.should == subject.default_type.name
-		end
-	  end
-	  describe '文字種DEFAULTが定義されてない場合' do
-		subject { cts=Okura::CharTypes.new }
-		it 'エラーになる' do
-		  expect { subject.type_for('a'.ord) }.to raise_error
-		end
-	  end
-	end
+    describe '文字に対するCharTypeが定義されていない場合' do
+      describe '文字種DEFAULTが定義されている場合' do
+        subject {
+          cts=Okura::CharTypes.new
+          cts.define_type 'DEFAULT',false,false,0
+          cts
+        }
+        it 'CharType#default_typeが返る' do
+          subject.type_for('a'.ord).name.should == subject.default_type.name
+        end
+      end
+
+      describe '文字種DEFAULTが定義されてない場合' do
+        subject { cts=Okura::CharTypes.new }
+        it 'エラーになる' do
+          expect { subject.type_for('a'.ord) }.to raise_error
+        end
+      end
+    end
   end
+
   describe '#define_map' do
-	describe '互換カテゴリが指定された場合' do
-	  subject {
-		cts=Okura::CharTypes.new
-		cts.define_type 'A',true,true,10
-		cts.define_type 'B',true,true,10
-		cts.define_map 1,cts.named('A'),[cts.named('B')]
-		cts
-	  }
-	  it '互換カテゴリが正しく認識される' do
-		subject.named('A').accept?(1).should be_true
-		subject.named('B').accept?(1).should be_true
-	  end
-	end
+    describe '互換カテゴリが指定された場合' do
+      subject {
+            cts=Okura::CharTypes.new
+            cts.define_type 'A',true,true,10
+            cts.define_type 'B',true,true,10
+            cts.define_map 1,cts.named('A'),[cts.named('B')]
+            cts
+      }
+
+      it '互換カテゴリが正しく認識される' do
+            subject.named('A').accept?(1).should be_true
+            subject.named('B').accept?(1).should be_true
+      end
+    end
   end
 end
 
 describe Okura::UnkDic do
   describe '#possible_words' do
-	describe '互換カテゴリ' do
-	  subject {
-		cts=Okura::CharTypes.new
-		cts.define_type 'KATAKANA',false,true,0
-		cts.define_type 'HIRAGANA',false,true,0
-		cts.define_map 'ア'.ord,cts.named('KATAKANA'),[]
-		cts.define_map 'ー'.ord,cts.named('HIRAGANA'),[cts.named('KATAKANA')]
-		ud=Okura::UnkDic.new cts
-		ud.define 'KATAKANA',f(10),f(20),1000
-		ud.define 'HIRAGANA',f(1),f(2),1000
-		ud
-	  }
-	  it '互換カテゴリを正しく解釈する' do
-		subject.possible_words('アーー',0,false).should == [w('アーー',10,20,1000)]
-	  end
-	end
-	describe '未知語定義' do
-	  describe '同一文字種に複数の未知語定義があった場合' do
-		subject do
-		  cts=Okura::CharTypes.new
-		  cts.define_type 'A',true,true,0
-		  cts.define_map 'A'.ord,cts.named('A'),[]
-		  ud=Okura::UnkDic.new cts
-		  ud.define 'A',f(10),f(20),1000
-		  ud.define 'A',f(11),f(21),1111
-		  ud
-		end
-		it 'すべての定義から未知語を抽出する' do
-		  subject.possible_words('A',0,false).should == [
-			w('A',10,20,1000),
-			w('A',11,21,1111)
-		  ]
-		end
-	  end
-	end
+    describe '互換カテゴリ' do
+      subject {
+            cts=Okura::CharTypes.new
+            cts.define_type 'KATAKANA',false,true,0
+            cts.define_type 'HIRAGANA',false,true,0
+            cts.define_map 'ア'.ord,cts.named('KATAKANA'),[]
+            cts.define_map 'ー'.ord,cts.named('HIRAGANA'),[cts.named('KATAKANA')]
+            ud=Okura::UnkDic.new cts
+            ud.define 'KATAKANA',f(10),f(20),1000
+            ud.define 'HIRAGANA',f(1),f(2),1000
+            ud
+      }
+      it '互換カテゴリを正しく解釈する' do
+            subject.possible_words('アーー',0,false).should == [w('アーー',10,20,1000)]
+      end
+    end
+
+    describe '未知語定義' do
+      describe '同一文字種に複数の未知語定義があった場合' do
+        subject do
+          cts=Okura::CharTypes.new
+          cts.define_type 'A',true,true,0
+          cts.define_map 'A'.ord,cts.named('A'),[]
+          ud=Okura::UnkDic.new cts
+          ud.define 'A',f(10),f(20),1000
+          ud.define 'A',f(11),f(21),1111
+          ud
+        end
+
+        it 'すべての定義から未知語を抽出する' do
+          subject.possible_words('A',0,false).should == [
+                w('A',10,20,1000),
+                w('A',11,21,1111)
+          ]
+        end
+      end
+    end
   end
+
   describe '#possible_words: 文字コードによる挙動:' do
-	subject do
-	  cts=Okura::CharTypes.new
-	  cts.define_type 'A',true,true,0
-	  cts.define_map 'あ'.ord,cts.named('A'),[]
-	  ud=Okura::UnkDic.new cts
-	  ud.define 'A',f(10),f(20),1000
-	  ud
-	end
-	describe 'UTF8文字列が来たとき' do
-	  it '正しく解析できる' do
-		subject.possible_words('あいう'.encode('UTF-8'),0,false).map(&:surface).should == %w(あ)
-	  end
-	end
-	describe 'UTF8じゃない文字列が来たとき' do
-	  it 'エラーになる' do
-		expect { subject.possible_words('あいう'.encode('SHIFT_JIS'),0,false) }.to raise_error
-	  end
-	end
+    subject do
+      cts=Okura::CharTypes.new
+      cts.define_type 'A',true,true,0
+      cts.define_map 'あ'.ord,cts.named('A'),[]
+      ud=Okura::UnkDic.new cts
+      ud.define 'A',f(10),f(20),1000
+      ud
+    end
+
+    describe 'UTF8文字列が来たとき' do
+      it '正しく解析できる' do
+            subject.possible_words('あいう'.encode('UTF-8'),0,false).map(&:surface).should == %w(あ)
+      end
+    end
+
+    describe 'UTF8じゃない文字列が来たとき' do
+      it 'エラーになる' do
+            expect { subject.possible_words('あいう'.encode('SHIFT_JIS'),0,false) }.to raise_error
+      end
+    end
   end
+
   describe '#possible_words: 先頭文字のカテゴリによる挙動:' do
-	def create_chartypes typename_under_test
-	  cts=Okura::CharTypes.new
-	  cts.define_type 'T000',false,false,0
-	  cts.define_type 'T012',false,true,2
-	  cts.define_type 'T100',true,false,0
-	  cts.define_type 'T102',true,false,2
-	  cts.define_type 'T110',true,true,0
-	  cts.define_type 'T112',true,true,2
-	  cts.define_type 'ZZZZ',true,true,2
+    def create_chartypes typename_under_test
+      cts=Okura::CharTypes.new
+      cts.define_type 'T000',false,false,0
+      cts.define_type 'T012',false,true,2
+      cts.define_type 'T100',true,false,0
+      cts.define_type 'T102',true,false,2
+      cts.define_type 'T110',true,true,0
+      cts.define_type 'T112',true,true,2
+      cts.define_type 'ZZZZ',true,true,2
 
-	  cts.define_map 'A'.ord,cts.named(typename_under_test),[]
-	  cts.define_map 'Z'.ord,cts.named('ZZZZ'),[]
+      cts.define_map 'A'.ord,cts.named(typename_under_test),[]
+      cts.define_map 'Z'.ord,cts.named('ZZZZ'),[]
 
-	  cts
-	end
-	def create_subject typename_under_test
-	  udic=Okura::UnkDic.new create_chartypes(typename_under_test)
-	  udic.define typename_under_test,f(10),(20),1000
-	  udic
-	end
-	describe 'invoke=0のとき' do
-	  subject { create_subject 'T012' }
-	  describe '辞書に単語がある場合' do
-		it '未知語を抽出しない' do
-		  subject.possible_words('AAA',0,true).should be_empty
-		end
-	  end
-	end
-	describe 'invoke=1のとき' do
-	  describe '辞書に単語がある場合' do
-		subject { create_subject 'T102' }
-		it 'も､未知語を抽出する' do
-		  subject.possible_words('AAAZ',0,true).should_not be_empty
-		end
-	  end
-	  describe '先頭文字のカテゴリに対応する未知語定義がなかった場合' do
-		subject { create_subject 'T112' }
-		it '未知語を抽出しない' do
-		  subject.possible_words('ZZ',0,false).should be_empty
-		end
-	  end
-	  describe '辞書に単語がない場合' do
-		describe 'group=0のとき' do
-		  describe 'length=0のとき' do
-			subject { create_subject 'T100' }
-			it '未知語を抽出しない' do
-			  subject.possible_words('AAAZ',0,false).should be_empty
-			end
-		  end
-		  describe 'length=2のとき' do
-			subject { create_subject 'T102' }
-			it '2文字までの同種文字列を未知語とする' do
-			  subject.possible_words('AAAZ',0,false).map(&:surface).should == %w(A AA)
-			end
-		  end
-		end
-		describe 'group=1のとき' do
-		  describe 'length=0のとき' do
-			subject { create_subject 'T110' }
-			it '同種の文字列を長さ制限なしでまとめて未知語とする' do
-			  subject.possible_words('AAAAAZ',0,false).map(&:surface).should == %w(AAAAA)
-			end
-			it '連続が一文字の場合も未知語として取れる' do
-			  subject.possible_words('AZZZ',0,false).map(&:surface).should == %w(A)
-			end
-			it '1文字しかなくても正しく扱える' do
-			  subject.possible_words('A',0,false).map(&:surface).should == %w(A)
-			end
-		  end
-		  describe 'length=2のとき' do
-			subject { create_subject 'T112' }
-			it 'length=0の結果に加え､2文字までの同種文字列を未知語とする' do
-			  subject.possible_words('AAAAAZ',0,false).map(&:surface).should == %w(A AA AAAAA)
-			end
-			it '1文字しかなくても正しく扱える' do
-			  subject.possible_words('A',0,false).map(&:surface).should == %w(A)
-			end
-			it '2文字しかなくても正しく扱える' do
-			  subject.possible_words('AA',0,false).map(&:surface).should == %w(A AA)
-			end
-			it '3文字しかなくても正しく扱える' do
-			  subject.possible_words('AAA',0,false).map(&:surface).should == %w(A AA AAA)
-			end
-		  end
-		end
-	  end
-	end
+      cts
+    end
+
+    def create_subject typename_under_test
+      udic=Okura::UnkDic.new create_chartypes(typename_under_test)
+      udic.define typename_under_test,f(10),(20),1000
+      udic
+    end
+
+    describe 'invoke=0のとき' do
+      subject { create_subject 'T012' }
+      describe '辞書に単語がある場合' do
+        it '未知語を抽出しない' do
+          subject.possible_words('AAA',0,true).should be_empty
+        end
+      end
+    end
+
+    describe 'invoke=1のとき' do
+      describe '辞書に単語がある場合' do
+        subject { create_subject 'T102' }
+        it 'も､未知語を抽出する' do
+          subject.possible_words('AAAZ',0,true).should_not be_empty
+        end
+      end
+
+      describe '先頭文字のカテゴリに対応する未知語定義がなかった場合' do
+        subject { create_subject 'T112' }
+        it '未知語を抽出しない' do
+          subject.possible_words('ZZ',0,false).should be_empty
+        end
+      end
+
+      describe '辞書に単語がない場合' do
+        describe 'group=0のとき' do
+          describe 'length=0のとき' do
+            subject { create_subject 'T100' }
+            it '未知語を抽出しない' do
+              subject.possible_words('AAAZ',0,false).should be_empty
+            end
+          end
+
+          describe 'length=2のとき' do
+            subject { create_subject 'T102' }
+            it '2文字までの同種文字列を未知語とする' do
+              subject.possible_words('AAAZ',0,false).map(&:surface).should == %w(A AA)
+            end
+          end
+        end
+
+        describe 'group=1のとき' do
+          describe 'length=0のとき' do
+            subject { create_subject 'T110' }
+            it '同種の文字列を長さ制限なしでまとめて未知語とする' do
+              subject.possible_words('AAAAAZ',0,false).map(&:surface).should == %w(AAAAA)
+            end
+
+            it '連続が一文字の場合も未知語として取れる' do
+              subject.possible_words('AZZZ',0,false).map(&:surface).should == %w(A)
+            end
+
+            it '1文字しかなくても正しく扱える' do
+              subject.possible_words('A',0,false).map(&:surface).should == %w(A)
+            end
+          end
+
+          describe 'length=2のとき' do
+            subject { create_subject 'T112' }
+            it 'length=0の結果に加え､2文字までの同種文字列を未知語とする' do
+              subject.possible_words('AAAAAZ',0,false).map(&:surface).should == %w(A AA AAAAA)
+            end
+
+            it '1文字しかなくても正しく扱える' do
+              subject.possible_words('A',0,false).map(&:surface).should == %w(A)
+            end
+
+            it '2文字しかなくても正しく扱える' do
+              subject.possible_words('AA',0,false).map(&:surface).should == %w(A AA)
+            end
+
+            it '3文字しかなくても正しく扱える' do
+              subject.possible_words('AAA',0,false).map(&:surface).should == %w(A AA AAA)
+            end
+          end
+        end
+      end
+    end
   end
 end
 
@@ -697,6 +745,7 @@ describe Okura::Nodes do
       mcp[1].word.surface.should == 'b'
       mcp[2].word.surface.should == 'BOS/EOS'
     end
+
     it '単語長が1を超えても動く' do
       mat=Okura::Matrix.new 2,2
       mat.set(0,1,10)

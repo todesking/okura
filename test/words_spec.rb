@@ -1,10 +1,12 @@
-#-*- coding:utf-8
+# -*- coding: utf-8 -*-
+
 require File.join(File.dirname(__FILE__),'..','lib','okura')
 
 describe Okura::Words::Builder do
   def f n
     Okura::Feature.new n,"F#{n}"
   end
+
   W=Okura::Word
   it '単語を表記ごとに分類できる' do
     wsb=Okura::Words::Builder.new
@@ -20,6 +22,7 @@ describe Okura::Words::Builder do
     ws.group(0).should == [w1,w2]
     ws.group(1).should == [w3]
   end
+
   it '単語数を返せる' do
     wsb=Okura::Words::Builder.new
     wsb.build.word_size.should == 0

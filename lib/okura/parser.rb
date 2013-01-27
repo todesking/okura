@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 module Okura
   module Parser
 
@@ -6,7 +8,6 @@ module Okura
     end
 
     module Base
-
       def initialize io
         @io=io
       end
@@ -95,7 +96,8 @@ module Okura
 
       def parse line
         cols=line.gsub(/\s*#.*$/,'').split(/\s+/)
-          return if cols.empty?
+        return if cols.empty?
+
         case cols[0]
         when /^0x([0-9a-fA-F]{4})(?:\.\.0x([0-9a-fA-F]{4}))?$/
           # mapping

@@ -1,5 +1,5 @@
-#!/bin/env ruby
-# -*- filetype:ruby -*-
+#!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
 
 require 'rubygems'
 
@@ -52,7 +52,7 @@ command:
 
 class IllegalOption < StandardError
   def initialize msg
-        @message=msg
+    @message=msg
   end
 
   attr_reader :message

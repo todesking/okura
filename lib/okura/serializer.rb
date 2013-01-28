@@ -118,7 +118,7 @@ module Okura
       private
 
       def open_src dir,filename,&block
-        File.open(File.join(dir,filename),"r:#{encoding}:UTF-8",&block)
+        File.open(File.join(dir,filename),&block)
       end
 
       def open_dest dir,filename,&block
@@ -159,7 +159,7 @@ module Okura
         inputs.each{|input|
           case input
           when String
-            File.open(input,"r:#{encoding}:UTF-8",&block)
+            File.open(input,&block)
           else
             block.call input
           end

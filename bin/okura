@@ -1,5 +1,5 @@
-#!/bin/env ruby
-# -*- filetype:ruby -*-
+#!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
 
 require 'rubygems'
 

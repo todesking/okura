@@ -15,4 +15,5 @@ okura compile {辞書の場所} {コンパイル済み辞書の出力先}
 okura console {コンパイル済み辞書の場所}
 
 辞書はMeCab用のものが使用できます｡
+辞書をコンパイルするときに ./configure --with-charset=utf8 してください。
 http://sourceforge.jp/projects/naist-jdic/releases/ にあるmecab-naist-jdicで動作確認しています｡

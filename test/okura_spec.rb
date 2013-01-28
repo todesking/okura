@@ -192,7 +192,8 @@ Z,9,10,5244,記号,空白,*,*,*,*,*
         EOS
 
         fi=Okura::Serializer::FormatInfo.new
-        fi.encoding='UTF-8'
+        Encoding.default_internal = "UTF-8"
+        Encoding.default_external = "UTF-8"
         fi.compile_dict(src_dir,bin_dir)
 
         tagger=Okura::Serializer::FormatInfo.create_tagger(bin_dir)
@@ -207,6 +208,47 @@ Z,9,10,5244,記号,空白,*,*,*,*,*
         u1=tagger.dic.unk_dic.word_templates_for('A')[0]
         u1.left.text.should == 'F5'
         u1.right.text.should == 'F6'
+      }
+    end
+
+    it 'UTF-8 以外を default_external に設定するとエラーになる' do
+      with_dict_dir{|src_dir,bin_dir|
+        set_content(src_dir,'w1.csv',<<-EOS)
+w1,1,2,1000,
+        EOS
+        set_content(src_dir,'w2.csv',<<-EOS)
+w2,5,6,2000,
+w3,9,10,3000,
+        EOS
+        set_content(src_dir,'left-id.def',<<-EOS)
+1 F1
+5 F5
+9 F9
+        EOS
+        set_content(src_dir,'right-id.def',<<-EOS)
+2 F2
+6 F6
+10 F10
+        EOS
+        set_content(src_dir,'char.def',<<-EOS)
+A 0 0 1
+Z 1 1 3
+        EOS
+        set_content(src_dir,'unk.def',<<-EOS)
+A,5,6,3274,記号,一般,*,*,*,*,*
+Z,9,10,5244,記号,空白,*,*,*,*,*
+        EOS
+        set_content(src_dir,'matrix.def',<<-EOS)
+2 3
+0 0 10
+0 1 5
+        EOS
+
+        fi=Okura::Serializer::FormatInfo.new
+        Encoding.default_internal = "UTF-8"
+        Encoding.default_external = "EUC-JP"
+
+        expect { fi.compile_dict(src_dir,bin_dir) }.to raise_error
       }
     end
   end
@@ -292,7 +334,7 @@ TYPE3   0 1 3
 あがなう,854,458,6636,動詞,自立,*,*,五段・ワ行促音便,基本形,あがなう,アガナウ,アガナウ,あがなう/購う/贖う,
 あがめる,645,546,1234,動詞,自立,*,*,一段,基本形,あがめる,アガメル,アガメル,あがめる/崇める,
       EOS
-      serializer.compile(features_l,features_r,[as_io(src)],'UTF-8',out)
+      serializer.compile(features_l,features_r,[as_io(src)],out)
       out.rewind
       wd=serializer.load(out)
 

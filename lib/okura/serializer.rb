@@ -14,7 +14,6 @@ module Okura
         @features=:Marshal
         @char_types=:Marshal
         @matrix=:Marshal
-        @encoding='EUC-JP'
       end
 
       attr_accessor :word_dic
@@ -22,7 +21,6 @@ module Okura
       attr_accessor :features
       attr_accessor :char_types
       attr_accessor :matrix
-      attr_accessor :encoding
 
       # 指定されたディレクトリにあるソースをコンパイルする
       def compile_dict src_dir,bin_dir
@@ -43,7 +41,7 @@ module Okura
           Dir.chdir(src_dir){ Dir.glob('*.csv') }.
           map{|file|File.join(src_dir,file)}
         open_dest(bin_dir,'word_dic.bin'){|dest|
-          serializer_for('WordDic',word_dic).compile(features_l,features_r,word_src_files,encoding,dest)
+          serializer_for('WordDic',word_dic).compile(features_l,features_r,word_src_files,dest)
         }
 
         char_types=open_src(src_dir,'char.def'){|src|
@@ -155,7 +153,7 @@ module Okura
     end
 
     module WordDic
-      def self.each_input inputs,encoding,&block
+      def self.each_input inputs,&block
         inputs.each{|input|
           case input
           when String
@@ -167,9 +165,9 @@ module Okura
       end
 
       class Naive
-        def compile(features_l,features_r,inputs,encoding,output)
+        def compile(features_l,features_r,inputs,output)
           dic=Okura::WordDic::Naive.new
-          Okura::Serializer::WordDic.each_input(inputs,encoding){|input|
+          Okura::Serializer::WordDic.each_input(inputs){|input|
             parser=Okura::Parser::Word.new(input)
             parser.each{|surface,lid,rid,cost|
               word=Okura::Word.new(
@@ -190,10 +188,10 @@ module Okura
       end
 
       class DoubleArray
-        def compile(features_l,features_r,inputs,encoding,output)
+        def compile(features_l,features_r,inputs,output)
           puts 'loading...'
           dic=Okura::WordDic::DoubleArray::Builder.new
-          Okura::Serializer::WordDic.each_input(inputs,encoding){|input|
+          Okura::Serializer::WordDic.each_input(inputs){|input|
             parser=Okura::Parser::Word.new(input)
             parser.each{|surface,lid,rid,cost|
               word=Okura::Word.new(

@@ -52,7 +52,7 @@ command:
 
 class IllegalOption < StandardError
   def initialize msg
-        @message=msg
+    @message=msg
   end
 
   attr_reader :message

@@ -237,7 +237,6 @@ module Okura
         # [ Words, [Integer], [Integer] ] -> WordDic::DoubleArray
         def self.build_from_serialized data
           words,base,check=data
-          puts base.length
           DoubleArray.new words,base,check
         end
       end
